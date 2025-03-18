@@ -9,17 +9,54 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Function to get group admins
-export const getGroupAdmins = (participants) => {
-    let admins = [];
-    for (let i of participants) {
-        if (i.admin === "superadmin" || i.admin === "admin") {
-            admins.push(i.id);
-        }
-    }
-    return admins || [];
+// SHENG AI MODE
+const shengMode = {
+    enabled: true,
+    users: {}
 };
 
+const triggerWords = ["yooh", "niaje", "mzee", "wozza", "mambo", "uko aje", "freshi", "sasa", "cheza", "vipi", "mzito", "boss", "bigman", "mrembo", "shem", "fala", "mambo vipi"];
+
+const shengReplies = [
+    "Niaje mzae, uko aje?", "Aje aje, shwari?", "Mambo vipi, msee!", "Freshi barida?",
+    "Sema, uko aje?", "Cheza na mimi, mzae!", "Huko aje, form ni gani?", 
+    "Kuna nini leo? Twende kazi!", "Naona leo uko soft, ni aje?", "Leo tunabonga facts au jokes?",
+    "Unakaa mtu wa madharau leo, uko sure uko fiti?", "Cheza chini, life ni ngumu!", 
+    "Wagwan, unaeza survive ghetto?", "Shem, mbona umenyamaza?", "Weh, fanya form!"
+];
+
+const toggleSheng = (m, status) => {
+    if (status === "on") {
+        shengMode.enabled = true;
+        m.reply("✅ *Sheng AI Mode activated!* Tuko mtaa sasa!");
+    } else if (status === "off") {
+        shengMode.enabled = false;
+        m.reply("🚫 *Sheng AI Mode deactivated!* Nime chill sasa.");
+    }
+};
+
+const shengChat = async (m) => {
+    if (!shengMode.enabled) return; 
+
+    const text = m.body.toLowerCase();
+
+    if (triggerWords.includes(text)) {
+        m.reply("Yooh semaje mzee, unadai bot ama?");
+        shengMode.users[m.sender] = "waitingForYes"; 
+    } else if (shengMode.users[m.sender] === "waitingForYes" && ["yes", "eeh", "yap"].includes(text)) {
+        m.reply("Naeka na 80 mkuu, uko ready nitume link?");
+        shengMode.users[m.sender] = "waitingForConfirm";
+    } else if (shengMode.users[m.sender] === "waitingForConfirm" && ["yes", "eeh", "yap"].includes(text)) {
+        m.reply("✅ Link hii hapa mkuu:\nhttps://projext-session-server-a9643bc1be6b.herokuapp.com/");
+        delete shengMode.users[m.sender];
+    } else if (shengMode.users[m.sender]) {
+        delete shengMode.users[m.sender]; 
+    } else if (Math.random() < 0.3) { 
+        m.reply(shengReplies[Math.floor(Math.random() * shengReplies.length)]);
+    }
+};
+
+// MAIN BOT HANDLER
 const Handler = async (chatUpdate, sock, logger) => {
     try {
         if (chatUpdate.type !== 'notify') return;
@@ -58,9 +95,11 @@ const Handler = async (chatUpdate, sock, logger) => {
         await handleAntilink(m, sock, logger, isBotAdmins, isAdmins, isCreator);
 
         const { isGroup, type, sender, from, body } = m;
-      //  console.log(m);
 
-        // ✅ Corrected Plugin Folder Path
+        // SHENG AI CHAT
+        await shengChat(m);
+
+        // PLUGIN SYSTEM
         const pluginDir = path.resolve(__dirname, '..', 'plugins');  
         
         try {
@@ -89,5 +128,4 @@ const Handler = async (chatUpdate, sock, logger) => {
 };
 
 export default Handler;
-        
-            
+export { toggleSheng };
