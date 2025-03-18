@@ -6,19 +6,19 @@ const shengMode = {
 };
 
 const triggerWords = [
-  "yooh", "wozza", "mzee", "mkuu niaje", "hey", "sup", "mambo", "uko aje"
+  "yooh", "wozza", "mzee", "mkuu niaje", "bro", "sup", "mambo", "uko aje"
 ];
 
 // Dictionary of specific Sheng phrases and responses
 const shengReplies = {
-  "yooh": "Yooh semaje mzee, unadai bot ama?",
-  "wozza": "Wozza msee, mambo vipi? Kuna vibe?",
+  "bera": "Yooh semaje mzee, unadai bot ama?",
+  "wozza": "Wozza mzee, form no gani mkuu ",
   "mzee": "Sema mzee, form ni gani? Uko poa?",
-  "mkuu niaje": "Mkuu niaje, uko freshi? Unauliza aje?",
-  "hey": "Hey, vipi boss? Unahitaji mambo gani leo?",
+  "mkuu niaje": "poa mzee, uko freshi? Unauliza aje?",
+  "bro": "rada mkuu semaje",
   "sup": "Sup, uko fiti? Tuko mtaa!",
-  "mambo": "Mambo vipi? Hustle aje, let's vibe!",
-  "uko aje": "Uko aje? Niko freshi sana, tuko in the game!",
+  "mambo": "poa sana mkuu. unasema aje?",
+  "uko aje": "nko poa mkuu,mybe wewe ",
   
   // Additional lively responses
   "cheza": "Cheza chini, relax and enjoy life!",
