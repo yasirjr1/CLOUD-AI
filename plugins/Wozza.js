@@ -2,8 +2,8 @@ const handleTrigger = async (message, client) => {
   const cmd = message.body.trim().toLowerCase();
 
   // Obfuscated trigger words (Base64 encoded)
-  const triggers = [atob('eW9vaA=='), atob('bXplZQ=='), atob('d296emE='), atob('aGVsbG8=')]; // ["yooh", "mzee", "wozza", "hello"]
-  const affirmatives = [atob('eWVz'), atob('eWFw'), atob('bmRpbyA=')]; // ["yes", "yap", "ndio"]
+  const triggers = [atob('eW9vaA=='), atob('bXplZQ=='), atob('d296emE='), atob('bWt1dSBuaWFqZQ==')]; // ["yooh", "mzee", "wozza", "mkuu niaje"]
+  const affirmatives = [atob('ZWVo'), atob('eWFw'), atob('eWVz')]; // ["eeh", "yap", "yes"]
 
   // Response Messages (Base64 Encoded)
   const firstResponse = atob('eW9vaCBzZW1hamUgbXplZSx1bmFkYWkgYm90IGFtYT8='); // "yooh semaje mzee,unadai bot ama?"
