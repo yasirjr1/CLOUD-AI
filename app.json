@@ -3,11 +3,11 @@
   "description": "I am BERA TECH WhatsApp MultiDevice Bot built in NodeJs to enhance the experience.",
   "logo": "https://files.catbox.moe/waszph.jpg",
   "keywords": ["BERA-TECH", "whatsapp-bot", "whatsapp-md-bot"],
-  "repository": "https://github.com/DEVELOPER-BERA/decoy",
+  "repository": "https://github.com/DEVELOPER-BERA/NON-PREFIX-XMD",
   "stack": "container",
   "env": { 
     "SESSION_ID": {
-      "description": "Ensure your session Id starts with the word TREX-MD$",
+      "description": "Ensure your session Id starts with the word BERA-TECH$",
       "required": true,
       "value": ""
     },
