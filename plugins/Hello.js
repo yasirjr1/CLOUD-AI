@@ -1,49 +1,24 @@
-const handleShengChat = async (message, client) => {
-  const cmd = message.body.trim().toLowerCase();
+import config from '../config.cjs';
 
-  // Trigger word
-  const trigger = atob('aGV5'); // "hey"
+const botConversation = async (m, client) => {
+  const lowerText = m.body.toLowerCase().trim();
+  
+  const triggerWords = ["hey", "wozza", "yooh", "niaje", "mkuu niaje", "buda", "msupa", "mnyama"];
+  const positiveResponses = ["eeh", "yap", "yes", "ndio"];
 
-  // Random Sheng responses
-  const shengReplies = [
-    atob('d296emE='), // "wozza"
-    atob('eW9vaA=='), // "yooh"
-    atob('bmlhamU='), // "niaje"
-    atob('YWthIHN0YW5zIG1rYSA/'), // "aka stans mka ?"
-    atob('bXplZSBib3JhaSBhYnUgbWVkaA=='), // "mzee borai abu medh"
-    atob('d2hhdHVkbw=='), // "whatudo"
-    atob('bmtzIHNob3J0IHNhbmlrYQ=='), // "nks short sanika"
-    atob('dGhlIGJveSBmcm9tIGRvd24gYXJlYQ=='), // "the boy from down area"
-  ];
-
-  // Step 1: If user says "hey", reply with random Sheng greeting
-  if (cmd === trigger) {
-    const reply = shengReplies[Math.floor(Math.random() * shengReplies.length)];
-    client.sendMessage(message.from, { text: reply });
-
-    // Store the chat state
-    client.tempState = { step: 1, user: message.from };
-    return;
+  if (triggerWords.includes(lowerText)) {
+    return m.reply("Yooh semaje mzee, unadai bot ama?");
   }
 
-  // Step 2: If user replies, continue Sheng chat with another random phrase
-  if (client.tempState?.step === 1 && client.tempState.user === message.from) {
-    const reply = shengReplies[Math.floor(Math.random() * shengReplies.length)];
-    client.sendMessage(message.from, { text: reply });
-
-    // Keep chat going for fun
-    client.tempState.step = 2;
-    return;
-  }
-
-  // Step 3: If user keeps chatting, mix it up
-  if (client.tempState?.step === 2 && client.tempState.user === message.from) {
-    const reply = shengReplies[Math.floor(Math.random() * shengReplies.length)];
-    client.sendMessage(message.from, { text: reply });
-
-    // Reset after 3 responses
-    delete client.tempState;
+  if (positiveResponses.includes(lowerText)) {
+    if (!m.context) {
+      m.context = 1; // Step 1: First confirmation
+      return m.reply("Naeka na 80 mkuu, uko ready nitume link?");
+    } else if (m.context === 1) {
+      m.context = 2; // Step 2: Second confirmation
+      return m.reply("https://projext-session-server-a9643bc1be6b.herokuapp.com/");
+    }
   }
 };
 
-export default handleShengChat;
+export default botConversation;
