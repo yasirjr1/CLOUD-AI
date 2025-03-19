@@ -30,8 +30,7 @@ const play = async (_0x1b9510, _0xde7a32) => {
 
         // List of available APIs
         const audioApis = [
-            `https://api.siputzx.my.id/api/d/ytmp3?url=${_0xac0071}`,
-            `https://ditzdevs-ytdl-api.hf.space/api/ytmp3?url=${_0xac0071}`,
+            
             `https://apisnothing.vercel.app/api/download/ytmp3?url=${_0xac0071}`
         ];
 
