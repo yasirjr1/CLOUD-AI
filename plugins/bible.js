@@ -16,6 +16,8 @@ const bibleCommand = async (m, Matrix) => {
     return m.reply('⚠️ Please specify the book, chapter, and verse. Example: *bible john 3:16*');
   }
 
+
+  
   try {
     // Encode the reference for the API call
     const encodedReference = encodeURIComponent(reference);
