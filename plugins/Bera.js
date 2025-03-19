@@ -1,64 +1,68 @@
-import _0x5f083d from '../../config.cjs';
-import _0x5cb03a from 'yt-search';
-import fetch from 'node-fetch';
+import ytsearch from "yt-search";
+import fetch from "node-fetch";
 
-const play = async (_0x1b9510, _0xde7a32) => {
-    const _0x420086 = _0x5f083d.PREFIX;
-    const _0x528617 = _0x1b9510.body.startsWith(_0x420086) ? _0x1b9510.body.slice(_0x420086.length).split(" ")[0x0].toLowerCase() : '';
-    const _0x5809fc = _0x1b9510.body.slice(_0x420086.length + _0x528617.length).trim();
-    
-    if (_0x528617 !== 'play' && _0x528617 !== 'video') {
-        return;
+const playVideo = async (msg, bot) => {
+  const body = msg.body.toLowerCase().trim();
+
+  if (!["play", "video"].includes(body.split(" ")[0])) return;
+
+  const command = body.split(" ")[0];
+  const query = body.slice(command.length).trim();
+
+  if (!query) {
+    return msg.reply("❌ *Please provide a search query!*");
+  }
+
+  await msg.react("⏳");
+
+  try {
+    const searchResults = await ytsearch(query);
+    if (!searchResults.videos.length) {
+      return msg.reply("❌ *No results found!*");
     }
 
-    if (!_0x5809fc) {
-        return _0x1b9510.reply("❌ Please provide a search query!");
+    const video = searchResults.videos[0];
+    const apiUrl =
+      command === "play"
+        ? `https://apis.davidcyriltech.my.id/youtube/mp3?url=${encodeURIComponent(video.url)}`
+        : `https://apis.davidcyriltech.my.id/youtube/mp4?url=${encodeURIComponent(video.url)}`;
+
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (!data.success || !data.result.download_url) {
+      return msg.reply("❌ *Download failed, please try again.*");
     }
 
-    await _0x1b9510.React('⏳');
-    
-    try {
-        const _0x589357 = await _0x5cb03a(_0x5809fc);
-        if (!_0x589357.videos.length) {
-            return _0x1b9510.reply("❌ No results found!");
-        }
+    const downloadUrl = data.result.download_url;
+    const mimeType = command === "play" ? "audio/mpeg" : "video/mp4";
 
-        const _0x24d96b = _0x589357.videos[0x0];
-        const _0xac0071 = _0x24d96b.url;
-        let _0x39489e, _0x566599, _0x1744fd, _0x24d9d1;
+    const caption = `📥 *NON-PREFIX-XMD DOWNLOADER*\n🎵 *Title:* ${video.title}\n⏱ *Duration:* ${video.timestamp}\n🔗 *Link:* ${video.url}\n\n_*Regards, Bruce Bera*_`;
 
-        if (_0x528617 === 'play') {
-            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`;
-            _0x566599 = "audio";
-            _0x1744fd = "audio/mpeg";
-            _0x24d9d1 = "📥 Downloaded in Audio Format";
-        } else if (_0x528617 === 'video') {
-            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp4?url=${_0xac0071}`;
-            _0x566599 = "video";
-            _0x1744fd = "video/mp4";
-            _0x24d9d1 = "📥 Downloaded in Video Format";
-        }
+    // Send video thumbnail separately before sending the media
+    await bot.sendMessage(
+      msg.from,
+      {
+        image: { url: video.thumbnail },
+        caption: `🎶 *${video.title}*\n📌 *Duration:* ${video.timestamp}\n\n*NON-PREFIX-XMD DOWNLOADER*`,
+      },
+      { quoted: msg }
+    );
 
-        const _0x15ce39 = await fetch(_0x39489e);
-        const _0x3e2e40 = await _0x15ce39.json();
-
-        if (!_0x3e2e40.success) {
-            return _0x1b9510.reply("❌ Download failed, please try again.");
-        }
-
-        const _0x575e0e = _0x3e2e40.result.download_url;
-        const _0x485b96 = {
-            [_0x566599]: { url: _0x575e0e },
-            mimetype: _0x1744fd,
-            caption: _0x24d9d1
-        };
-
-        await _0xde7a32.sendMessage(_0x1b9510.from, _0x485b96, { quoted: _0x1b9510 });
-
-    } catch (_0x5db9ce) {
-        console.error("Error:", _0x5db9ce);
-        return _0x1b9510.reply("❌ An error occurred while processing your request.");
-    }
+    // Send the actual media file
+    await bot.sendMessage(
+      msg.from,
+      {
+        [command === "play" ? "audio" : "video"]: { url: downloadUrl },
+        mimetype: mimeType,
+        caption,
+      },
+      { quoted: msg }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    return msg.reply("❌ *An error occurred while processing your request.*");
+  }
 };
 
-export default play;
+export default playVideo;
