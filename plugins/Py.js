@@ -38,56 +38,33 @@ const play = async (message, bot) => {
         const messageOptions = {
             image: { url: video.thumbnail },
             caption: responseText,
-            footer: "Regards, Bruce Bera",
-            buttons: [
-                { buttonId: "1", buttonText: { displayText: "🎬 Video" }, type: 1 },
-                { buttonId: "2", buttonText: { displayText: "🎵 Audio" }, type: 1 },
-                { buttonId: "3", buttonText: { displayText: "📄 Video (Doc)" }, type: 1 },
-                { buttonId: "4", buttonText: { displayText: "📑 Audio (Doc)" }, type: 1 }
-            ],
-            headerType: 4
+            footer: "Regards, Bruce Bera"
         };
 
         const sentMessage = await bot.sendMessage(message.from, messageOptions, { quoted: message });
-        const messageId = sentMessage.key.id;
-        const videoUrl = video.url;
 
-        bot.ev.on("messages.upsert", async chatUpdate => {
+        bot.ev.once("messages.upsert", async chatUpdate => {
             const replyMessage = chatUpdate.messages[0];
             if (!replyMessage.message || replyMessage.key.remoteJid !== message.from) return;
             const response = replyMessage.message.conversation || replyMessage.message.extendedTextMessage?.text;
 
-            if (["1", "2", "3", "4"].includes(response)) {
-                let downloadUrl;
-                let fileType;
-                let mimeType;
-                let fileName;
-                let captionText;
+            const downloadFormats = {
+                "1": { type: "video", api: "ytmp4", caption: "📥 Downloading Video..." },
+                "2": { type: "audio", api: "ytmp3", caption: "📥 Downloading Audio...", mimetype: "audio/mpeg" },
+                "3": { type: "document", api: "ytmp4", caption: "📥 Downloading Video (Document)...", mimetype: "video/mp4", filename: "NON-PREFIX-XMD_Video.mp4" },
+                "4": { type: "document", api: "ytmp3", caption: "📥 Downloading Audio (Document)...", mimetype: "audio/mpeg", filename: "NON-PREFIX-XMD_Audio.mp3" }
+            };
 
-                if (response === "1") {
-                    downloadUrl = `https://apis.davidcyriltech.my.id/download/ytmp4?url=${videoUrl}`;
-                    fileType = "video";
-                    captionText = "📥 Downloading Video...";
-                } else if (response === "2") {
-                    downloadUrl = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${videoUrl}`;
-                    fileType = "audio";
-                    mimeType = "audio/mpeg";
-                    captionText = "📥 Downloading Audio...";
-                } else if (response === "3") {
-                    downloadUrl = `https://apis.davidcyriltech.my.id/download/ytmp4?url=${videoUrl}`;
-                    fileType = "document";
-                    mimeType = "video/mp4";
-                    fileName = "NON-PREFIX-XMD_Video.mp4";
-                    captionText = "📥 Downloading Video (Document)...";
-                } else if (response === "4") {
-                    downloadUrl = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${videoUrl}`;
-                    fileType = "document";
-                    mimeType = "audio/mpeg";
-                    fileName = "NON-PREFIX-XMD_Audio.mp3";
-                    captionText = "📥 Downloading Audio (Document)...";
-                }
+            if (!downloadFormats[response]) {
+                return message.reply("❌ Invalid selection! Please reply with 1, 2, 3, or 4.");
+            }
 
-                await message.reply(captionText);
+            const { type, api, caption, mimetype, filename } = downloadFormats[response];
+            const downloadUrl = `https://apis.davidcyriltech.my.id/download/${api}?url=${video.url}`;
+
+            await message.reply(caption);
+
+            try {
                 const fetchResponse = await fetch(downloadUrl);
                 const jsonResponse = await fetchResponse.json();
 
@@ -95,12 +72,16 @@ const play = async (message, bot) => {
                     return message.reply("❌ Download failed, please try again.");
                 }
 
-                const downloadFile = { url: jsonResponse.result.download_url };
-                const sendOptions = fileType === "document"
-                    ? { document: downloadFile, mimetype: mimeType, fileName, caption: captionText }
-                    : { [fileType]: downloadFile, mimetype: mimeType, caption: captionText };
+                const fileData = { url: jsonResponse.result.download_url };
+                const sendOptions = type === "document"
+                    ? { document: fileData, mimetype, fileName: filename, caption }
+                    : { [type]: fileData, mimetype, caption };
 
                 await bot.sendMessage(message.from, sendOptions, { quoted: replyMessage });
+
+            } catch (error) {
+                console.error("Error downloading:", error);
+                message.reply("❌ An error occurred while processing your request.");
             }
         });
 
