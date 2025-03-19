@@ -11,7 +11,7 @@ const play = async (message, bot) => {
     const query = body.slice(command.length).trim();
     if (!query) return message.reply("❌ Please provide a search query!");
 
-    await message.React('🔍');
+    await message.React('⏳'); // Reaction to indicate processing
     try {
         const searchResults = await ytSearch(query);
         if (!searchResults.videos.length) {
@@ -27,7 +27,7 @@ const play = async (message, bot) => {
 📺 *Channel:* ${video.author.name}
 🔗 *Link:* ${video.url}
 
-📥 *Choose a format to download:*
+📥 *Select a format to download:*
 1️⃣ Video
 2️⃣ Audio
 3️⃣ Video (Document)
@@ -43,24 +43,22 @@ const play = async (message, bot) => {
 
         const sentMessage = await bot.sendMessage(message.from, messageOptions, { quoted: message });
 
-        bot.ev.once("messages.upsert", async chatUpdate => {
+        bot.ev.on("messages.upsert", async chatUpdate => {
             const replyMessage = chatUpdate.messages[0];
             if (!replyMessage.message || replyMessage.key.remoteJid !== message.from) return;
             const response = replyMessage.message.conversation || replyMessage.message.extendedTextMessage?.text;
 
-            const downloadFormats = {
-                "1": { type: "video", api: "ytmp4", caption: "📥 Downloading Video..." },
-                "2": { type: "audio", api: "ytmp3", caption: "📥 Downloading Audio...", mimetype: "audio/mpeg" },
-                "3": { type: "document", api: "ytmp4", caption: "📥 Downloading Video (Document)...", mimetype: "video/mp4", filename: "NON-PREFIX-XMD_Video.mp4" },
-                "4": { type: "document", api: "ytmp3", caption: "📥 Downloading Audio (Document)...", mimetype: "audio/mpeg", filename: "NON-PREFIX-XMD_Audio.mp3" }
+            const downloadOptions = {
+                "1": { api: "ytmp4", type: "video", caption: "📥 Downloading Video..." },
+                "2": { api: "ytmp3", type: "audio", caption: "📥 Downloading Audio...", mimetype: "audio/mpeg" },
+                "3": { api: "ytmp4", type: "document", caption: "📥 Downloading Video (Document)...", mimetype: "video/mp4", filename: "NON-PREFIX-XMD_Video.mp4" },
+                "4": { api: "ytmp3", type: "document", caption: "📥 Downloading Audio (Document)...", mimetype: "audio/mpeg", filename: "NON-PREFIX-XMD_Audio.mp3" }
             };
 
-            if (!downloadFormats[response]) {
-                return message.reply("❌ Invalid selection! Please reply with 1, 2, 3, or 4.");
-            }
+            if (!downloadOptions[response]) return message.reply("❌ Invalid selection! Reply with 1, 2, 3, or 4.");
 
-            const { type, api, caption, mimetype, filename } = downloadFormats[response];
-            const downloadUrl = `https://apis.davidcyriltech.my.id/download/${api}?url=${video.url}`;
+            const { api, type, caption, mimetype, filename } = downloadOptions[response];
+            const downloadUrl = `https://apis.davidcyriltech.my.id/download/${api}?url=${encodeURIComponent(video.url)}`;
 
             await message.reply(caption);
 
@@ -68,8 +66,8 @@ const play = async (message, bot) => {
                 const fetchResponse = await fetch(downloadUrl);
                 const jsonResponse = await fetchResponse.json();
 
-                if (!jsonResponse.success) {
-                    return message.reply("❌ Download failed, please try again.");
+                if (!jsonResponse.success || !jsonResponse.result || !jsonResponse.result.download_url) {
+                    return message.reply("❌ Download failed. The API may be down, try again later.");
                 }
 
                 const fileData = { url: jsonResponse.result.download_url };
@@ -80,14 +78,14 @@ const play = async (message, bot) => {
                 await bot.sendMessage(message.from, sendOptions, { quoted: replyMessage });
 
             } catch (error) {
-                console.error("Error downloading:", error);
-                message.reply("❌ An error occurred while processing your request.");
+                console.error("Error fetching download:", error);
+                return message.reply("❌ An error occurred while processing your request. Please try again later.");
             }
         });
 
     } catch (error) {
-        console.error("Error:", error);
-        return message.reply("❌ An error occurred while processing your request.");
+        console.error("Search error:", error);
+        return message.reply("❌ An error occurred while searching for the video.");
     }
 };
 
