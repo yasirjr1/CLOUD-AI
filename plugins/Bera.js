@@ -37,16 +37,15 @@ const playVideo = async (msg, bot) => {
 
     const downloadUrl = data.result.download_url;
     const mimeType = command === "play" ? "audio/mpeg" : "video/mp4";
-    const caption = `📥 *NON-PREFIX-XMD DOWNLOADER*\n🎵 *Title:* ${video.title}\n⏱ *Duration:* ${video.timestamp}\n🔗 *Link:* ${video.url}\n\n*Regards, Bruce Bera*`;
+    const caption = `📥 *NON-PREFIX-XMD DOWNLOADER*\n🎵 *Title:* ${video.title}\n⏱ *Duration:* ${video.timestamp}\n🔗 *Link:* ${video.url}\n\n_*Regards, Bruce Bera*_`;
 
     await bot.sendMessage(
       msg.from,
       {
         [command === "play" ? "audio" : "video"]: { url: downloadUrl },
         mimetype: mimeType,
-        caption,
-        thumbnail: { url: video.thumbnail },
-        footer: "Regards, Bruce Bera",
+        caption, // Footer added inside the caption
+        thumbnail: { url: video.thumbnail }, // Thumbnail included
       },
       { quoted: msg }
     );
