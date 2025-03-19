@@ -3,19 +3,18 @@ import ytsearch from "yt-search";
 import fetch from "node-fetch";
 
 const playVideo = async (msg, bot) => {
-  const PREFIX = config.PREFIX;
-  const command = msg.body.startsWith(PREFIX) 
-    ? msg.body.slice(PREFIX.length).split(" ")[0].toLowerCase() 
-    : '';
-  const query = msg.body.slice(PREFIX.length + command.length).trim();
+  const body = msg.body.toLowerCase().trim();
 
-  if (!["play", "video"].includes(command)) return;
+  if (!["play", "video"].includes(body.split(" ")[0])) return;
+
+  const command = body.split(" ")[0];
+  const query = body.slice(command.length).trim();
 
   if (!query) {
     return msg.reply("❌ *Please provide a search query!*");
   }
 
-  await msg.React('⏳');
+  await msg.react("⏳");
 
   try {
     const searchResults = await ytsearch(query);
@@ -24,9 +23,10 @@ const playVideo = async (msg, bot) => {
     }
 
     const video = searchResults.videos[0];
-    const apiUrl = command === "play" 
-      ? `https://apis.davidcyriltech.my.id/download/ytmp3?url=${encodeURIComponent(video.url)}` 
-      : `https://apis.davidcyriltech.my.id/download/ytmp4?url=${encodeURIComponent(video.url)}`;
+    const apiUrl =
+      command === "play"
+        ? `https://apis.davidcyriltech.my.id/youtube/mp3?url=${encodeURIComponent(video.url)}`
+        : `https://apis.davidcyriltech.my.id/youtube/mp4?url=${encodeURIComponent(video.url)}`;
 
     const response = await fetch(apiUrl);
     const data = await response.json();
@@ -37,18 +37,19 @@ const playVideo = async (msg, bot) => {
 
     const downloadUrl = data.result.download_url;
     const mimeType = command === "play" ? "audio/mpeg" : "video/mp4";
-    const caption = `📥 *Downloaded: ${video.title}*`;
+    const caption = `📥 *NON-PREFIX-XMD DOWNLOADER*\n🎵 *Title:* ${video.title}\n⏱ *Duration:* ${video.timestamp}\n🔗 *Link:* ${video.url}\n\n*Regards, Bruce Bera*`;
 
     await bot.sendMessage(
-      msg.from, 
-      { 
-        [command === "play" ? "audio" : "video"]: { url: downloadUrl }, 
-        mimetype: mimeType, 
-        caption 
-      }, 
+      msg.from,
+      {
+        [command === "play" ? "audio" : "video"]: { url: downloadUrl },
+        mimetype: mimeType,
+        caption,
+        thumbnail: { url: video.thumbnail },
+        footer: "Regards, Bruce Bera",
+      },
       { quoted: msg }
     );
-
   } catch (error) {
     console.error("Error:", error);
     return msg.reply("❌ *An error occurred while processing your request.*");
