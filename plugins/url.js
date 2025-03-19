@@ -1,13 +1,38 @@
-const tourl = async (m, bot) => {
-  // Match if the message contains the valid command directly, without any prefix
-  const validCommands = ['tourl', 'geturl', 'upload', 'url'];
+import fetch from 'node-fetch';
+import FormData from 'form-data';
+import { fileTypeFromBuffer } from 'file-type';
+import { writeFile, unlink } from 'fs/promises';
 
-  // Check if the message body directly contains any valid command
-  const cmd = m.body.toLowerCase().split(' ')[0]; // First word of the message is the command
-  
-  if (validCommands.includes(cmd)) {
+const MAX_FILE_SIZE_MB = 200;
+
+async function uploadMedia(buffer) {
+  try {
+    const { ext } = await fileTypeFromBuffer(buffer);
+    const bodyForm = new FormData();
+    bodyForm.append("fileToUpload", buffer, "file." + ext);
+    bodyForm.append("reqtype", "fileupload");
+
+    const res = await fetch("https://catbox.moe/user/api.php", {
+      method: "POST",
+      body: bodyForm,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Upload failed with status ${res.status}: ${res.statusText}`);
+    }
+
+    const data = await res.text();
+    return data;
+  } catch (error) {
+    console.error("Error during media upload:", error);
+    throw new Error('Failed to upload media');
+  }
+}
+
+const tourl = async (m, bot) => {
+  if (m.body.toLowerCase().trim() === 'url') { // Triggered only by "url"
     if (!m.quoted || !['imageMessage', 'videoMessage', 'audioMessage'].includes(m.quoted.mtype)) {
-      return m.reply(`Send/Reply/Quote an image, video, or audio to upload \n*${cmd}*`);
+      return m.reply(`Please send/reply/quote an image, video, or audio to generate a URL.`);
     }
 
     try {
@@ -48,13 +73,13 @@ const tourl = async (m, bot) => {
       const mediaType = getMediaType(m.quoted.mtype);
       if (mediaType === 'audio') {
         const message = {
-          text: `*Hey ${m.pushName} Here Is Your Audio URL*\n*Url:* ${mediaUrl}`,
+          text: `*Here is your audio URL*\n*Url:* ${mediaUrl}`,
         };
         await bot.sendMessage(m.from, message, { quoted: m });
       } else {
         const message = {
           [mediaType]: { url: mediaUrl },
-          caption: `*Hey ${m.pushName} Here Is Your Media*\n*Url:* ${mediaUrl}`,
+          caption: `*Here is your media URL*\n*Url:* ${mediaUrl}`,
         };
         await bot.sendMessage(m.from, message, { quoted: m });
       }
@@ -65,3 +90,18 @@ const tourl = async (m, bot) => {
     }
   }
 };
+
+const getMediaType = (mtype) => {
+  switch (mtype) {
+    case 'imageMessage':
+      return 'image';
+    case 'videoMessage':
+      return 'video';
+    case 'audioMessage':
+      return 'audio';
+    default:
+      return null;
+  }
+};
+
+export default tourl;
