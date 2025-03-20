@@ -1,73 +1,73 @@
-import fetch from "node-fetch";
+const mistral = async (_0x194111, _0x26ee37) => {
+  const _0x2dd4e3 = await readChatHistoryFromFile();
+  const _0x276e78 = _0x194111.body.trim().toLowerCase();
 
-const lyricsHandler = async (_0x1d9bf5, _0x5c8c29) => {
-  // Extract user message and split into words
-  const userInput = _0x1d9bf5.body.trim().toLowerCase().split(" ");
-  const command = userInput[0]; // First word (should be "lyrics" or "lyric")
-  const songQuery = userInput.slice(1).join(" "); // Rest of the message
-
-  // Valid trigger words
-  const validCommands = ["lyrics", "lyric"];
-  
-  // Check if the command is valid and a song title is provided
-  if (!validCommands.includes(command) || !songQuery) {
-    return _0x1d9bf5.reply(
-      "❗ Please provide a song title and artist!\nExample: *lyrics faded Alan Walker*"
-    );
+  if (_0x276e78 === "/forget") {
+    await deleteChatHistory(_0x2dd4e3, _0x194111.sender);
+    await _0x26ee37.sendMessage(_0x194111.from, {
+      text: "🗑️ Conversation deleted successfully."
+    }, { quoted: _0x194111 });
+    return;
   }
 
-  try {
-    await _0x5c8c29.sendMessage(
-      _0x1d9bf5.from,
-      { text: "🎵 Searching for lyrics..." },
-      { quoted: _0x1d9bf5 }
-    );
+  // Extract first word as the command
+  const words = _0x276e78.split(" ");
+  const command = words[0]; 
+  const userQuery = words.slice(1).join(" "); // Remaining message
 
-    // Extract song title and artist
-    const words = songQuery.split(" ");
-    const artist = words.pop(); // Last word is assumed to be the artist
-    const title = words.join(" "); // Remaining words form the song title
+  // Allowed trigger words (regardless of case)
+  const validCommands = ["gpt", "ai", "bera"];
 
-    // Construct API URL
-    const apiUrl = `https://api.davidcyriltech.my.id/lyrics?t=${encodeURIComponent(title)}&a=${encodeURIComponent(artist)}`;
-
-    // Fetch lyrics from API
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      console.error("API Error:", response.status, response.statusText);
-      return _0x5c8c29.sendMessage(
-        _0x1d9bf5.from,
-        { text: "⚠️ API Error: " + response.statusText },
-        { quoted: _0x1d9bf5 }
-      );
+  if (validCommands.includes(command)) {
+    if (!userQuery) {
+      await _0x26ee37.sendMessage(_0x194111.from, {
+        text: "❗ Please provide a prompt.\nExample: *gpt What is AI?*"
+      }, { quoted: _0x194111 });
+      return;
     }
 
-    const data = await response.json();
-    if (!data.lyrics || !data.title || !data.artist) {
-      console.error("Invalid API response:", data);
-      return _0x5c8c29.sendMessage(
-        _0x1d9bf5.from,
-        { text: "⚠️ Could not find lyrics. Please check the title and artist." },
-        { quoted: _0x1d9bf5 }
-      );
-    }
+    try {
+      const chatHistory = _0x2dd4e3[_0x194111.sender] || [];
+      const conversation = [
+        { role: "system", content: "You are a highly intelligent and helpful assistant." },
+        ...chatHistory,
+        { role: "user", content: userQuery }
+      ];
 
-    // Send lyrics response
-    await _0x5c8c29.sendMessage(
-      _0x1d9bf5.from,
-      {
-        text: `🎤 *Lyrics for "${data.title}" by ${data.artist}:*\n\n${data.lyrics}\n\n📄 *Long lyrics? Tap and hold to copy!*`,
-      },
-      { quoted: _0x1d9bf5 }
-    );
-  } catch (error) {
-    console.error("Unexpected Error:", error.message || error);
-    _0x5c8c29.sendMessage(
-      _0x1d9bf5.from,
-      { text: "⚠️ An unexpected error occurred. Please try again later." },
-      { quoted: _0x1d9bf5 }
-    );
+      await _0x194111.React("🤖"); // React with a bot emoji
+
+      const response = await fetch("https://matrixcoder.tech/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "text-generation",
+          model: "hf/meta-llama/meta-llama-3-8b-instruct",
+          messages: conversation
+        })
+      });
+
+      if (!response.ok) throw new Error("HTTP error: " + response.status);
+
+      const data = await response.json();
+      const botReply = data.result.response;
+
+      // Update chat history
+      await updateChatHistory(_0x2dd4e3, _0x194111.sender, { role: "user", content: userQuery });
+      await updateChatHistory(_0x2dd4e3, _0x194111.sender, { role: "assistant", content: botReply });
+
+      // Send response
+      await _0x26ee37.sendMessage(_0x194111.from, { text: botReply }, { quoted: _0x194111 });
+
+      await _0x194111.React("✅"); // React with a success emoji
+    } catch (error) {
+      console.error("Error:", error);
+      await _0x26ee37.sendMessage(_0x194111.from, {
+        text: "⚠️ Something went wrong. Try again later."
+      }, { quoted: _0x194111 });
+
+      await _0x194111.React("❌");
+    }
   }
 };
 
-export default lyricsHandler;
+export default mistral;
