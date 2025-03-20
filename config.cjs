@@ -22,11 +22,12 @@ const config = {
   GEMINI_KEY: process.env.GEMINI_KEY || "",
   WELCOME: process.env.WELCOME !== undefined ? process.env.WELCOME === 'true' : false, 
 
-  // New Features
-  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : false,
-  AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
+  // 🛡 Antileft & Antidelete Settings
+  ANTI_LEFT: process.env.ANTI_LEFT !== undefined ? process.env.ANTI_LEFT === 'true' : true, 
+  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
 
-  // Juice WRLD Quotes for AutoBio
+  // Auto Bio with Juice WRLD Quotes
+  AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
   BIO_QUOTES: [
     "I still see your shadows in my room...",
     "You left me falling and landing inside my grave...",
