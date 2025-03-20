@@ -1,47 +1,76 @@
+import fs from "fs";
 import config from "../config.cjs";
 
-const antiDeleteDB = {}; // Temporary storage (Use a database for persistence)
+const settingsFile = "./plugins/settings.json";
 
-const antiDelete = async (m, gss) => {
-  try {
-    const cmd = m.body.toLowerCase().trim();
-
-    if (cmd === "antidelete on") {
-      antiDeleteDB[m.from] = true;
-      return m.reply("*✅ Anti-Delete is now ACTIVE. Deleted messages will be recovered.*\n\n*Regards, Bruce Bera*");
+// Load or create settings file
+const loadSettings = () => {
+    if (!fs.existsSync(settingsFile)) {
+        fs.writeFileSync(settingsFile, JSON.stringify({ ANTIDELETE: config.ANTI_DELETE }, null, 2));
     }
-
-    if (cmd === "antidelete off") {
-      antiDeleteDB[m.from] = false;
-      return m.reply("*❌ Anti-Delete is now OFF. Deleted messages will not be recovered.*\n\n*Regards, Bruce Bera*");
-    }
-  } catch (error) {
-    console.error("Error in Anti-Delete command:", error);
-    m.reply("⚠️ An error occurred. Try again.");
-  }
+    return JSON.parse(fs.readFileSync(settingsFile));
 };
 
-const checkDelete = async (event, gss) => {
-  try {
-    if (!antiDeleteDB[event.remoteJid]) return; // Check if Anti-Delete is enabled
-
-    const message = event.message;
-    if (!message) return;
-
-    const participant = event.participant;
-    const key = event.key;
-    
-    // Restore the deleted message
-    let text = `*🛑 Anti-Delete Alert 🛑*\n\n`;
-    text += `*User:* @${participant.split("@")[0]}\n`;
-    text += `*Deleted Message:*`;
-
-    await gss.sendMessage(event.remoteJid, { text, mentions: [participant] });
-    await gss.sendMessage(event.remoteJid, message, { quoted: key });
-
-  } catch (error) {
-    console.error("Error in Anti-Delete:", error);
-  }
+const saveSettings = (newSettings) => {
+    fs.writeFileSync(settingsFile, JSON.stringify(newSettings, null, 2));
 };
 
-export { antiDelete, checkDelete };
+// Handle Antidelete Command
+const handleAntideleteCommand = async (message, Matrix) => {
+    const sender = message.key.participant || message.key.remoteJid;
+    if (!sender.includes(config.OWNER_NUMBER)) {
+        return Matrix.sendMessage(message.key.remoteJid, { text: "🚫 *Only the bot owner can use this command!*" });
+    }
+
+    const settings = loadSettings();
+    const command = message.message.conversation.toLowerCase();
+
+    if (command === "antidelete on") {
+        settings.ANTIDELETE = true;
+        saveSettings(settings);
+        await Matrix.sendMessage(message.key.remoteJid, { text: "✅ *Antidelete is now ENABLED!*", footer: "Regards, Bruce Bera" });
+    } else if (command === "antidelete off") {
+        settings.ANTIDELETE = false;
+        saveSettings(settings);
+        await Matrix.sendMessage(message.key.remoteJid, { text: "❌ *Antidelete is now DISABLED!*", footer: "Regards, Bruce Bera" });
+    }
+};
+
+// Detect and Show Deleted Messages
+const antidelete = async (update, Matrix) => {
+    try {
+        const settings = loadSettings();
+        if (!settings.ANTIDELETE) return;
+
+        if (update.type === "message-revoke") {
+            const message = update.messages[0];
+            if (!message.key.fromMe) { // Only detect deleted messages from others
+                const chatId = message.key.remoteJid;
+                const sender = message.key.participant || message.key.remoteJid;
+                let msgContent = "📌 *Message Deleted:*";
+
+                if (message.message?.conversation) {
+                    msgContent += `\n💬 *Text:* ${message.message.conversation}`;
+                } else if (message.message?.imageMessage) {
+                    msgContent += `\n🖼️ *An image was deleted.*`;
+                } else if (message.message?.videoMessage) {
+                    msgContent += `\n📹 *A video was deleted.*`;
+                } else if (message.message?.documentMessage) {
+                    msgContent += `\n📄 *A document was deleted.*`;
+                } else {
+                    msgContent += `\n❓ *Unknown content was deleted.*`;
+                }
+
+                await Matrix.sendMessage(chatId, {
+                    text: `⚠️ *Antidelete Alert!*\n\n👤 *User:* @${sender.split('@')[0]}\n${msgContent}`,
+                    mentions: [sender],
+                    footer: "Regards, Bruce Bera"
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error in Antidelete:", error);
+    }
+};
+
+export { handleAntideleteCommand, antidelete };
