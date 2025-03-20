@@ -1,30 +1,58 @@
 import fetch from 'node-fetch';
 import config from '../../config.cjs';
 
-const gptCommand = async (message, client) => {
+const lyricsCommand = async (message, client) => {
     const userMessage = message.body.toLowerCase();
-    const triggerWords = ["gpt", "ai", "bera"]; // Trigger words without prefix
+    if (!userMessage.startsWith('lyrics') && !userMessage.startsWith('lyric')) return;
 
-    if (!triggerWords.some(word => userMessage.startsWith(word))) return;
-
-    const query = userMessage.replace(/^(gpt|ai|bera)\s+/i, '').trim();
-    if (!query) {
-        await client.sendMessage(message.from, { text: "Please provide a prompt. Example: `gpt What's the meaning of life?`" }, { quoted: message });
+    const songName = userMessage.replace(/^(lyrics|lyric)\s+/i, '').trim();
+    if (!songName) {
+        await client.sendMessage(message.from, { text: "Please provide a song name. Example: `lyrics Shape of You`" }, { quoted: message });
         return;
     }
 
+    let lyricsText = '';
     try {
-        const response = await fetch(`https://api.dreaded.site/api/chatgpt?text=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error("API request failed");
+        // First API Attempt
+        let response = await fetch(`https://some-lyrics-api.com/api/lyrics?song=${encodeURIComponent(songName)}`);
+        if (!response.ok) throw new Error("Failed to fetch lyrics");
 
-        const data = await response.json();
-        if (!data.result) throw new Error("Invalid API response");
+        let data = await response.json();
+        if (!data.lyrics) throw new Error("Lyrics not found");
 
-        await client.sendMessage(message.from, { text: `🤖 *AI Response:*\n\n${data.result}` }, { quoted: message });
+        lyricsText = data.lyrics;
     } catch (error) {
-        await client.sendMessage(message.from, { text: "❌ Failed to fetch response. Try again later!" }, { quoted: message });
-        console.error("GPT Error:", error);
+        // Backup API Attempt
+        try {
+            let backupResponse = await fetch(`https://backup-lyrics-api.com/api?song=${encodeURIComponent(songName)}`);
+            if (!backupResponse.ok) throw new Error("Backup API failed");
+
+            let backupData = await backupResponse.json();
+            if (!backupData.lyrics) throw new Error("Lyrics not found in backup");
+
+            lyricsText = backupData.lyrics;
+        } catch (backupError) {
+            await client.sendMessage(message.from, { text: "❌ Lyrics not found. Try another song!" }, { quoted: message });
+            return;
+        }
     }
+
+    const formattedLyrics = `🎶 *Lyrics for* _${songName}_ 🎶\n\n${lyricsText}`;
+
+    const buttonMessage = {
+        text: formattedLyrics,
+        footer: "Tap below to copy lyrics",
+        buttons: [
+            {
+                buttonId: "copy_lyrics",
+                buttonText: { displayText: "📋 Copy Lyrics" },
+                type: 1
+            }
+        ],
+        headerType: 1
+    };
+
+    await client.sendMessage(message.from, buttonMessage, { quoted: message });
 };
 
-export default gptCommand;
+export default lyricsCommand;
