@@ -1,16 +1,12 @@
-import config from "../config.cjs";
-
 export const antidelete = async (Matrix, message) => {
     try {
-        if (!config.ANTIDELETE) return; // Exit if Antidelete is OFF
-
         const { messages } = message;
         if (!messages || !messages[0]?.messageStubType) return;
 
         const msg = messages[0];
         if (msg.messageStubType !== 68) return; // Only detect deleted messages (Type 68)
 
-        const chatId = msg.key.remoteJid;
+        const chatId = msg.key.remoteJid; // Keeps the recovered message in the same chat
         const sender = msg.key.participant || msg.key.remoteJid;
         const messageType = Object.keys(msg.message || {})[0];
 
@@ -26,6 +22,7 @@ export const antidelete = async (Matrix, message) => {
 
         recoveredMessage += `\n\n> *Regards, Bruce Bera.*`;
 
+        // Send the recovered message ONLY in the chat where it was deleted
         await Matrix.sendMessage(chatId, { text: recoveredMessage, mentions: [sender] });
 
     } catch (error) {
