@@ -1,55 +1,63 @@
-import fetch from "node-fetch";
-import ytsearch from "yt-search";
+import _0x5cb03a from 'yt-search';
+import fetch from 'node-fetch';
 
-const playCommand = async (m, Matrix) => {
-  const command = m.body.split(" ")[0].toLowerCase();
-  const query = m.body.slice(command.length).trim();
+const play = async (_0x1b9510, _0xde7a32) => {
+    const _0x2c2c73 = _0x1b9510.body.toLowerCase().split(" ");
+    const _0x528617 = _0x2c2c73[0]; // First word of the message
+    const _0x5809fc = _0x2c2c73.slice(1).join(" ").trim(); // Rest of the message
 
-  if (command === "play") {
-    if (!query) {
-      return m.reply("⚠️ *Please provide a YouTube URL or song name.*");
+    if (_0x528617 !== 'play' && _0x528617 !== 'video') {
+        return;
     }
 
+    if (!_0x5809fc) {
+        return _0x1b9510.reply("❌ Please provide a search query!");
+    }
+
+    await _0x1b9510.React('⏳');
+    
     try {
-      const yt = await ytsearch(query);
-      if (!yt.results.length) {
-        return m.reply("❌ No results found for your search.");
-      }
+        const _0x589357 = await _0x5cb03a(_0x5809fc);
+        if (!_0x589357.videos.length) {
+            return _0x1b9510.reply("❌ No results found!");
+        }
 
-      const yts = yt.results[0];
-      const apiUrl = `https://apis.davidcyriltech.my.id/youtube/mp3?url=${encodeURIComponent(yts.url)}`;
+        const _0x24d96b = _0x589357.videos[0];
+        const _0xac0071 = _0x24d96b.url;
+        let _0x39489e, _0x566599, _0x1744fd, _0x24d9d1;
 
-      console.log("Fetching:", apiUrl); // Debugging log
+        if (_0x528617 === 'play') {
+            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`;
+            _0x566599 = "audio";
+            _0x1744fd = "audio/mpeg";
+            _0x24d9d1 = "📥 Downloaded in Audio Format";
+        } else if (_0x528617 === 'video') {
+            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp4?url=${_0xac0071}`;
+            _0x566599 = "video";
+            _0x1744fd = "video/mp4";
+            _0x24d9d1 = "📥 Downloaded in Video Format";
+        }
 
-      const response = await fetch(apiUrl);
-      const data = await response.json();
+        const _0x15ce39 = await fetch(_0x39489e);
+        const _0x3e2e40 = await _0x15ce39.json();
 
-      console.log("API Response:", data); // Debugging log
+        if (!_0x3e2e40.success) {
+            return _0x1b9510.reply("❌ Download failed, please try again.");
+        }
 
-      if (!data.success || !data.result.downloadUrl) {
-        return m.reply("⚠️ Failed to fetch the audio. Please try again later.");
-      }
+        const _0x575e0e = _0x3e2e40.result.download_url;
+        const _0x485b96 = {
+            [_0x566599]: { url: _0x575e0e },
+            mimetype: _0x1744fd,
+            caption: _0x24d9d1
+        };
 
-      const ytmsg = `
-🎵 *Title:* ${yts.title}
-⏳ *Duration:* ${yts.timestamp}
-👀 *Views:* ${yts.views}
-🎤 *Author:* ${yts.author.name}
-🔗 *Link:* ${yts.url}
+        await _0xde7a32.sendMessage(_0x1b9510.from, _0x485b96, { quoted: _0x1b9510 });
 
-*Powered by NON-PREFIX-XMD*`;
-
-      // Send song details with thumbnail
-      await Matrix.sendMessage(m.from, { image: { url: data.result.image || "" }, caption: ytmsg }, { quoted: m });
-
-      // Send audio file
-      await Matrix.sendMessage(m.from, { audio: { url: data.result.downloadUrl }, mimetype: "audio/mpeg" }, { quoted: m });
-
-    } catch (error) {
-      console.error("❌ Error fetching song:", error);
-      m.reply("⚠️ An error occurred. Please try again later.");
+    } catch (_0x5db9ce) {
+        console.error("Error:", _0x5db9ce);
+        return _0x1b9510.reply("❌ An error occurred while processing your request.");
     }
-  }
 };
 
-export default playCommand;
+export default play;
