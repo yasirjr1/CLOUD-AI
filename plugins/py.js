@@ -17,14 +17,15 @@ const play = async (_0x1b9510, _0xde7a32) => {
     await _0x1b9510.React('⏳');
 
     try {
+        // Search for the video
         const _0x589357 = await ytSearch(_0x5809fc);
         if (!_0x589357.videos.length) {
             return _0x1b9510.reply("❌ No results found!");
         }
 
-        const _0x24d96b = _0x589357.videos[0];
-        const _0xac0071 = _0x24d96b.url;
-        const _0xthumbnail = _0x24d96b.thumbnail;
+        const _0x24d96b = _0x589357.videos[0]; // First result
+        const _0xac0071 = _0x24d96b.url; // Video URL
+        const _0xthumbnail = _0x24d96b.thumbnail; // Video thumbnail
         let _0x39489e, _0x566599, _0x1744fd, _0x24d9d1;
 
         if (_0x528617 === 'play') {
@@ -39,20 +40,30 @@ const play = async (_0x1b9510, _0xde7a32) => {
             _0x24d9d1 = "📥 *Downloaded in Video Format*";
         }
 
+        // Fetch the download link
         const _0x15ce39 = await fetch(_0x39489e);
         const _0x3e2e40 = await _0x15ce39.json();
 
-        if (!_0x3e2e40 || !_0x3e2e40.url) {
+        let _0x575e0e;
+        if (_0x528617 === 'play') {
+            _0x575e0e = _0x3e2e40.url; // Direct MP3 link
+        } else {
+            _0x575e0e = _0x3e2e40.result?.url || _0x3e2e40.url; // Direct MP4 link
+        }
+
+        if (!_0x575e0e) {
             return _0x1b9510.reply("❌ Download failed, please try again.");
         }
 
-        const _0x575e0e = _0x3e2e40.url;
+        // Fetch and process thumbnail
+        const _0xthumbnailBuffer = await fetch(_0xthumbnail).then(res => res.buffer());
+
         const _0x485b96 = {
             [_0x566599]: { url: _0x575e0e },
             mimetype: _0x1744fd,
             caption: `${_0x24d9d1}\n\n*🎵 Title:* ${_0x24d96b.title}\n*⏳ Duration:* ${_0x24d96b.timestamp}\n\nBERA TECH DOWNLOADER`,
-            footer: "regards, Bruce Bera",
-            jpegThumbnail: await (await fetch(_0xthumbnail)).buffer() // Fetch thumbnail
+            footer: "BERA TECH DOWNLOADER",
+            jpegThumbnail: _0xthumbnailBuffer
         };
 
         await _0xde7a32.sendMessage(_0x1b9510.from, _0x485b96, { quoted: _0x1b9510 });
