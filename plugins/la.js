@@ -1,41 +1,82 @@
-const mistral = async (_0x194111, _0x26ee37) => {
-  const _0x2dd4e3 = await readChatHistoryFromFile();
-  const _0x276e78 = _0x194111.body.trim().toLowerCase();
+import { promises as fs } from "fs";
+import path from "path";
+import fetch from "node-fetch";
+import { generateWAMessageFromContent, proto } from "@whiskeysockets/baileys";
+import config from "../../config.cjs";
 
-  if (_0x276e78 === "/forget") {
-    await deleteChatHistory(_0x2dd4e3, _0x194111.sender);
-    await _0x26ee37.sendMessage(_0x194111.from, {
-      text: "🗑️ Conversation deleted successfully."
-    }, { quoted: _0x194111 });
+// File paths
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+const chatHistoryFile = path.resolve(__dirname, "../mistral_history.json");
+
+// Function to read chat history
+async function readChatHistory() {
+  try {
+    const data = await fs.readFile(chatHistoryFile, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    return {}; // Return empty object if file doesn't exist
+  }
+}
+
+// Function to write chat history
+async function writeChatHistory(data) {
+  try {
+    await fs.writeFile(chatHistoryFile, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error("Error writing chat history:", error);
+  }
+}
+
+// Function to update chat history
+async function updateChatHistory(history, user, message) {
+  if (!history[user]) history[user] = [];
+  history[user].push(message);
+  if (history[user].length > 20) history[user].shift(); // Keep max 20 messages
+  await writeChatHistory(history);
+}
+
+// Function to delete chat history
+async function deleteChatHistory(history, user) {
+  delete history[user];
+  await writeChatHistory(history);
+}
+
+// AI Chatbot function
+const gptChat = async (message, bot) => {
+  const chatHistory = await readChatHistory();
+  const text = message.body.toLowerCase();
+
+  // Handle "/forget" command
+  if (text === "/forget") {
+    await deleteChatHistory(chatHistory, message.sender);
+    await bot.sendMessage(message.from, { text: "🗑️ Chat history deleted successfully." }, { quoted: message });
     return;
   }
 
-  // Extract first word as the command
-  const words = _0x276e78.split(" ");
-  const command = words[0]; 
-  const userQuery = words.slice(1).join(" "); // Remaining message
+  // Supported trigger words
+  const triggerWords = ["gpt", "ai", "bera"];
+  const [command, ...args] = text.split(" ");
+  const query = args.join(" ").trim();
 
-  // Allowed trigger words (regardless of case)
-  const validCommands = ["gpt", "ai", "bera"];
-
-  if (validCommands.includes(command)) {
-    if (!userQuery) {
-      await _0x26ee37.sendMessage(_0x194111.from, {
-        text: "❗ Please provide a prompt.\nExample: *gpt What is AI?*"
-      }, { quoted: _0x194111 });
+  if (triggerWords.includes(command.toLowerCase())) {
+    if (!query) {
+      await bot.sendMessage(message.from, { text: "❌ Please provide a prompt!" }, { quoted: message });
       return;
     }
 
     try {
-      const chatHistory = _0x2dd4e3[_0x194111.sender] || [];
+      // Prepare chat context
+      const previousMessages = chatHistory[message.sender] || [];
       const conversation = [
-        { role: "system", content: "You are a highly intelligent and helpful assistant." },
-        ...chatHistory,
-        { role: "user", content: userQuery }
+        { role: "system", content: "You are a helpful AI assistant." },
+        ...previousMessages,
+        { role: "user", content: query }
       ];
 
-      await _0x194111.React("🤖"); // React with a bot emoji
+      await message.React("🧠"); // React with brain emoji
 
+      // API Call to MatrixCoder AI
       const response = await fetch("https://matrixcoder.tech/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -46,28 +87,55 @@ const mistral = async (_0x194111, _0x26ee37) => {
         })
       });
 
-      if (!response.ok) throw new Error("HTTP error: " + response.status);
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
       const data = await response.json();
-      const botReply = data.result.response;
+      const reply = data.result.response;
 
-      // Update chat history
-      await updateChatHistory(_0x2dd4e3, _0x194111.sender, { role: "user", content: userQuery });
-      await updateChatHistory(_0x2dd4e3, _0x194111.sender, { role: "assistant", content: botReply });
+      // Save chat history
+      await updateChatHistory(chatHistory, message.sender, { role: "user", content: query });
+      await updateChatHistory(chatHistory, message.sender, { role: "assistant", content: reply });
 
-      // Send response
-      await _0x26ee37.sendMessage(_0x194111.from, { text: botReply }, { quoted: _0x194111 });
+      // Detect Code Block
+      const codeBlockMatch = reply.match(/```([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        const codeContent = codeBlockMatch[1];
+        let msg = generateWAMessageFromContent(message.from, {
+          viewOnceMessage: {
+            message: {
+              messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 },
+              interactiveMessage: proto.Message.InteractiveMessage.create({
+                body: proto.Message.InteractiveMessage.Body.create({ text: reply }),
+                footer: proto.Message.InteractiveMessage.Footer.create({ text: "> 🤖 Powered by BERA AI" }),
+                nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                  buttons: [
+                    {
+                      name: "cta_copy",
+                      buttonParamsJson: JSON.stringify({
+                        display_text: "📋 Copy Code",
+                        id: "copy_code",
+                        copy_code: codeContent
+                      })
+                    }
+                  ]
+                })
+              })
+            }
+          }
+        }, {});
 
-      await _0x194111.React("✅"); // React with a success emoji
+        await bot.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
+      } else {
+        await bot.sendMessage(message.from, { text: reply }, { quoted: message });
+      }
+
+      await message.React("✅"); // React with checkmark emoji
     } catch (error) {
-      console.error("Error:", error);
-      await _0x26ee37.sendMessage(_0x194111.from, {
-        text: "⚠️ Something went wrong. Try again later."
-      }, { quoted: _0x194111 });
-
-      await _0x194111.React("❌");
+      await bot.sendMessage(message.from, { text: "❌ Something went wrong!" }, { quoted: message });
+      console.error("GPT Error:", error);
+      await message.React("❌");
     }
   }
 };
 
-export default mistral;
+export default gptChat;
