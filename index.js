@@ -70,7 +70,6 @@ const logger = MAIN_LOGGER.child({});
 logger.level = "trace";
 
 const msgRetryCounterCache = new NodeCache();
-
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
@@ -79,6 +78,13 @@ const credsPath = path.join(sessionDir, 'creds.json');
 
 if (!fs.existsSync(sessionDir)) {
     fs.mkdirSync(sessionDir, { recursive: true });
+}
+
+// AntiDelete Feature Settings
+const settingsPath = path.join(__dirname, 'plugins/settings.json');
+let settings = { ANTIDELETE: true };
+if (fs.existsSync(settingsPath)) {
+    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
 }
 
 async function downloadSessionData() {
@@ -120,7 +126,7 @@ async function start() {
             }
         });
 
-        Matrix.ev.on('connection.update', (update) => {
+        Matrix.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
             if (connection === 'close') {
                 if (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut) {
@@ -128,8 +134,8 @@ async function start() {
                 }
             } else if (connection === 'open') {
                 if (initialConnection) {
-                    console.log(chalk.green("BERA TECH CONNECTED SUCCESSFUL"));
-                    Matrix.sendMessage(Matrix.user.id, { 
+                    console.log(chalk.green("BERA TECH CONNECTED SUCCESSFULLY"));
+                    await Matrix.sendMessage(Matrix.user.id, { 
                         image: { url: "https://files.catbox.moe/ldetco.jpg" }, 
                         caption: `╭─────────────━┈⊷
 │ *𝖭𝖮𝖭-𝖯𝖱𝖤𝖥𝖨𝖷-𝖷𝖬𝖣*
@@ -153,71 +159,56 @@ async function start() {
 
         Matrix.ev.on('creds.update', saveCreds);
 
-        Matrix.ev.on("messages.upsert", async chatUpdate => await Handler(chatUpdate, Matrix, logger));
-        Matrix.ev.on("call", async (json) => await Callupdate(json, Matrix));
-        Matrix.ev.on("group-participants.update", async (messag) => await GroupUpdate(Matrix, messag));
+        // AntiDelete Feature
+        Matrix.ev.on('messages.update', async (updates) => {
+            for (const update of updates) {
+                if (settings.ANTIDELETE && update.messageStubType === 68) {
+                    const sender = update.key.participant || update.key.remoteJid;
+                    const messageType = update.message ? Object.keys(update.message)[0] : "Unknown";
 
-        if (config.MODE === "public") {
-            Matrix.public = true;
-        } else if (config.MODE === "private") {
-            Matrix.public = false;
-        }
+                    let messageText = `🚨 *Antidelete Activated* 🚨\n\n`;
+                    messageText += `👤 *Sender:* @${sender.split('@')[0]}\n`;
+                    messageText += `💬 *Message Type:* ${messageType}\n\n`;
 
+                    if (update.message?.conversation) {
+                        messageText += `📜 *Deleted Message:* ${update.message.conversation}\n\n`;
+                    } else if (update.message?.extendedTextMessage) {
+                        messageText += `📜 *Deleted Message:* ${update.message.extendedTextMessage.text}\n\n`;
+                    }
+
+                    messageText += `🔹 *Regards, Bruce Bera*`;
+
+                    await Matrix.sendMessage(update.key.remoteJid, { text: messageText, mentions: [sender] });
+                }
+            }
+        });
+
+        // Owner Command to Enable/Disable AntiDelete
         Matrix.ev.on('messages.upsert', async (chatUpdate) => {
             try {
                 const mek = chatUpdate.messages[0];
 
-                // Automatically react to messages if enabled
-                if (!mek.key.fromMe && config.AUTO_REACT) {
-                    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                    await doReact(randomEmoji, mek, Matrix);
-                }
-
-                // **STATUS VIEW FIX: Detect and View Status Automatically**
-                if (mek.key.remoteJid.endsWith('@broadcast') && mek.message?.imageMessage) {
-                    try {
-                        await Matrix.readMessages([mek.key]);
-                        console.log(chalk.green(`✅ Viewed status from ${mek.key.participant || mek.key.remoteJid}`));
-                    } catch (error) {
-                        console.error('❌ Error marking status as viewed:', error);
+                if (mek.key.fromMe && mek.message?.conversation) {
+                    const text = mek.message.conversation.toLowerCase();
+                    if (text === "antidelete on") {
+                        settings.ANTIDELETE = true;
+                        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+                        await Matrix.sendMessage(mek.key.remoteJid, { text: "✅ *Antidelete is now ON*" });
+                    } else if (text === "antidelete off") {
+                        settings.ANTIDELETE = false;
+                        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+                        await Matrix.sendMessage(mek.key.remoteJid, { text: "❌ *Antidelete is now OFF*" });
                     }
                 }
-                
+
             } catch (err) {
-                console.error('Error during auto reaction/status viewing:', err);
+                console.error('Error during message processing:', err);
             }
         });
 
-        // **✅ ANTILEFT FEATURE ADDED**
-        Matrix.ev.on("group-participants.update", async (update) => {
-            const { id, participants, action } = update;
-
-            if (action === "remove") {
-                for (const participant of participants) {
-                    try {
-                        // Get group metadata
-                        const groupMetadata = await Matrix.groupMetadata(id);
-                        const groupAdmins = groupMetadata.participants
-                            .filter(p => p.admin)
-                            .map(p => p.id);
-                        
-                        // Check if the user was removed by an admin
-                        const isRemovedByAdmin = groupAdmins.includes(update.by);
-
-                        if (!isRemovedByAdmin) {
-                            // If the user left voluntarily, re-add them
-                            await Matrix.groupParticipantsUpdate(id, [participant], "add");
-                            await Matrix.sendMessage(id, { 
-                                text: `⚠️ @${participant.split("@")[0]} left the group and was re-added.`,
-                                mentions: [participant] 
-                            });
-                        }
-                    } catch (error) {
-                        console.error(`Error in Antileft:`, error);
-                    }
-                }
-            }
-        });
+        Matrix.ev.on("messages.upsert", async chatUpdate => await Handler(chatUpdate, Matrix, logger));
+        Matrix.ev.on("call", async (json) => await Callupdate(json, Matrix));
+        Matrix.ev.on("group-participants.update", async (messag) => await GroupUpdate(Matrix, messag));
 
     } catch (error) {
         console.error('Critical Error:', error);
@@ -232,10 +223,8 @@ async function init() {
     } else {
         const sessionDownloaded = await downloadSessionData();
         if (sessionDownloaded) {
-            console.log("🔒 Session downloaded, starting bot.");
             await start();
         } else {
-            console.log("No session found or downloaded, QR code will be printed for authentication.");
             useQR = true;
             await start();
         }
@@ -245,7 +234,7 @@ async function init() {
 init();
 
 app.get('/', (req, res) => {
-    res.send('CONNECTED SUCCESSFULL');
+    res.send('CONNECTED SUCCESSFULLY');
 });
 
 app.listen(PORT, () => {
