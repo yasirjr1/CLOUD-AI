@@ -11,7 +11,7 @@ import pkg from '@whiskeysockets/baileys';
 const { generateWAMessageFromContent, proto } = pkg;
 import config from '../config.cjs';
 
-const chatHistoryFile = path.resolve(__dirname, '../gpt_chat_history.json');
+const chatHistoryFile = path.resolve(__dirname, '../data/gpt_chat_history.json');
 
 const GPT_APIS = [
     "https://api.dreaded.site/api/chatgpt?text=",
