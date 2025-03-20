@@ -18,16 +18,14 @@ const gptCommand = async (message, client) => {
         if (!response.ok) throw new Error("API request failed");
 
         const data = await response.json();
-        console.log("API Response:", data); // Debugging
+        console.log("API Raw Response:", JSON.stringify(data, null, 2)); // Log full API response
 
-        // Ensure the response contains a valid text output
-        let aiResponse = data.result;
-        if (!aiResponse || typeof aiResponse !== 'string') {
-            throw new Error("Invalid API response format");
-        }
+        // Check API response structure
+        if (!data || typeof data !== 'object') throw new Error("Invalid API response format");
+        if (!data.result || typeof data.result !== 'string') throw new Error("API response missing 'result' field");
 
         // Send AI response to the user
-        await client.sendMessage(message.from, { text: `🤖 *AI Response:*\n\n${aiResponse.trim()}` }, { quoted: message });
+        await client.sendMessage(message.from, { text: `🤖 *AI Response:*\n\n${data.result.trim()}` }, { quoted: message });
     } catch (error) {
         await client.sendMessage(message.from, { text: "❌ Failed to fetch response. Try again later!" }, { quoted: message });
         console.error("GPT Error:", error);
