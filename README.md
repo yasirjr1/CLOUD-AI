@@ -6,6 +6,32 @@
 
 ---
 
+
+## 📌 Instructions To the Users
+
+This bot is a none prefix bot.
+For you to access the bot menu just type the word menu
+do not start with a prefix for example
+.menu✖️
+
+ menu✅
+
+
+
+---
+
+## 🔥 whant to Purchase a bot at a Cheaper price?
+
+✨ Get your bot at a *Cheaper Price* by clicking the button below:  
+
+<p align="center">
+  <a href="https://developer-bera.vercel.app" target="_blank">
+    <img alt="Pair Code" src="https://img.shields.io/badge/CLICK HERE-⚡ GET YOUR BOT NOW ⚡-gold?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=black"/>
+  </a>
+</p>
+
+---
+
 ## 📌 Fork This Repository  
 
 🔥 Click the button below to fork this repo. Don't forget to ⭐ star this repository if you find it useful!  
