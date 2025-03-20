@@ -8,21 +8,25 @@ const gptPlugin = async (chatUpdate, Matrix) => {
         if (!mek.message || mek.key.fromMe) return;
 
         const messageText = mek.message.conversation || mek.message.extendedTextMessage?.text || "";
+        console.log("Received message:", messageText);
+
         if (!messageText.toLowerCase().startsWith("gpt")) return;
 
         const query = messageText.substring(3).trim(); // Remove "gpt" trigger
         if (!query) {
+            console.log("No prompt provided.");
             await Matrix.sendMessage(mek.key.remoteJid, { text: "Please provide a prompt after 'gpt'." });
             return;
         }
 
-        // Force English response by modifying query
+        console.log("Query sent to GPT:", query);
+
         const finalQuery = `Please respond in English: ${query}`;
-
-        // Call GPT API
         const response = await axios.get(`${GPT_API_URL}${encodeURIComponent(finalQuery)}`);
-        const replyText = response.data.result || "Sorry, I couldn't process that request.";
+        
+        console.log("API Response:", response.data);
 
+        const replyText = response.data.result || "Sorry, I couldn't process that request.";
         await Matrix.sendMessage(mek.key.remoteJid, { text: replyText });
     } catch (error) {
         console.error("GPT Plugin Error:", error);
