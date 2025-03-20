@@ -1,49 +1,48 @@
 import fs from "fs";
+import path from "path";
 import config from "../config.cjs";
 
 const vcfCompiler = async (m, gss) => {
   try {
-    const cmd = m.body.split(" ")[0].toLowerCase();
-    const validCommands = ["vcf", "VCF", "Vcf"];
+    const cmd = m.body.toLowerCase().trim();
+    if (!["vcf"].includes(cmd)) return;
 
-    if (!validCommands.includes(cmd)) return;
+    if (!m.isGroup) {
+      return m.reply("*📛 THIS COMMAND CAN ONLY BE USED IN GROUPS!*\n\n*Regards, Bruce Bera.*");
+    }
 
-    if (!m.isGroup) return m.reply("*📛 THIS COMMAND CAN ONLY BE USED IN GROUPS*");
+    m.reply("*⏳ NON-PREFIX-XMD is compiling your contacts, please wait...*");
 
     const groupMetadata = await gss.groupMetadata(m.from);
     const participants = groupMetadata.participants;
 
-    m.reply("*NON-PREFIX-XMD is compiling your contacts, pls wait...*");
-
-    let vcfData = "BEGIN:VCARD\nVERSION:3.0\n";
-    
-    for (let participant of participants) {
-      try {
-        const contact = await gss.getContact(participant.id);
-        const name = contact.notify || contact.pushname || `User-${participant.id.split("@")[0]}`;
-        const phoneNumber = participant.id.replace("@s.whatsapp.net", "");
-
-        vcfData += `FN:${name}\nTEL;TYPE=CELL:+${phoneNumber}\nEND:VCARD\nBEGIN:VCARD\nVERSION:3.0\n`;
-      } catch (err) {
-        console.error("Error fetching contact:", err);
-      }
+    if (!participants.length) {
+      return m.reply("*⚠️ No contacts found in this group.*\n\n*Regards, Bruce Bera.*");
     }
 
-    vcfData += "END:VCARD";
+    let vcfContent = `BEGIN:VCARD\nVERSION:3.0\nFN:WhatsApp Group Contacts\nEND:VCARD\n`;
+    
+    participants.forEach((member) => {
+      const number = member.id.split("@")[0];
+      const name = member.notify || member.pushname || `Unknown ${number}`;
+      
+      vcfContent += `
+BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+TEL;TYPE=CELL:+${number}
+END:VCARD`;
+    });
 
-    const filePath = "./contacts.vcf";
-    fs.writeFileSync(filePath, vcfData);
+    const vcfPath = path.join("/tmp", `GroupContacts-${m.from}.vcf`);
+    fs.writeFileSync(vcfPath, vcfContent, "utf8");
 
-    await gss.sendMessage(
-      m.from,
-      { document: fs.readFileSync(filePath), mimetype: "text/vcard", fileName: "WhatsAppContacts.vcf", caption: "*Regards, Bruce Bera.*" },
-      { quoted: m }
-    );
+    await gss.sendMessage(m.from, { document: { url: vcfPath }, mimetype: "text/x-vcard", fileName: "WhatsApp_Group_Contacts.vcf" });
 
-    fs.unlinkSync(filePath);
+    m.reply("*✅ Contact list compiled successfully! Download and import it into your phone or Gmail.*\n\n*Regards, Bruce Bera.*");
   } catch (error) {
-    console.error("Error compiling VCF:", error);
-    m.reply("*⚠️ An error occurred while compiling contacts. Please try again.*\n\n*Regards, Bruce Bera.*");
+    console.error("Error in VCF Compilation:", error);
+    m.reply("*⚠️ An error occurred while compiling contacts.*\n\n*Regards, Bruce Bera.*");
   }
 };
 
