@@ -6,7 +6,7 @@ const play = async (_0x1b9510, _0xde7a32) => {
 
   if (_0x5809fc.startsWith("play")) {
     const _0xsearchQuery = _0x5809fc.slice(4).trim(); // Extract search query after "play"
-    
+
     if (!_0xsearchQuery) {
       return _0x1b9510.reply("❌ *Please provide a search query!*");
     }
@@ -58,21 +58,21 @@ const play = async (_0x1b9510, _0xde7a32) => {
           let _0x39489e, _0x24d9d1, _0x566599, _0x1744fd;
 
           if (_0x16800d === '1') {
-            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp4?url=${_0xac0071}`;
+            _0x39489e = `https://apis-keith.vercel.app/download/dlmp4?url=${_0xac0071}`;
             _0x566599 = "video";
             _0x24d9d1 = "📥 *Downloaded in Video Format*";
           } else if (_0x16800d === '2') {
-            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`;
+            _0x39489e = `https://apis-keith.vercel.app/download/dlmp3?url=${_0xac0071}`;
             _0x566599 = "audio";
             _0x1744fd = "audio/mpeg";
             _0x24d9d1 = "📥 *Downloaded in Audio Format*";
           } else if (_0x16800d === '3') {
-            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp4?url=${_0xac0071}`;
+            _0x39489e = `https://apis-keith.vercel.app/download/dlmp4?url=${_0xac0071}`;
             _0x566599 = "document";
             _0x1744fd = "video/mp4";
             _0x24d9d1 = "📥 *Downloaded as Video Document*";
           } else if (_0x16800d === '4') {
-            _0x39489e = `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`;
+            _0x39489e = `https://apis-keith.vercel.app/download/dlmp3?url=${_0xac0071}`;
             _0x566599 = "document";
             _0x1744fd = "audio/mpeg";
             _0x24d9d1 = "📥 *Downloaded as Audio Document*";
@@ -80,23 +80,29 @@ const play = async (_0x1b9510, _0xde7a32) => {
             return _0x1b9510.reply("❌ *Invalid selection! Please reply with 1, 2, 3, or 4.*");
           }
 
-          const _0x15ce39 = await fetch(_0x39489e);
-          const _0x3e2e40 = await _0x15ce39.json();
-          if (!_0x3e2e40.success) {
-            return _0x1b9510.reply("❌ *Download failed, please try again.*");
+          try {
+            const _0x15ce39 = await fetch(_0x39489e);
+            const _0x3e2e40 = await _0x15ce39.json();
+            if (!_0x3e2e40.success) {
+              return _0x1b9510.reply("❌ *Download failed, please try again.*");
+            }
+
+            const _0x575e0e = _0x3e2e40.result.download_url;
+            const _0x485b96 = _0x566599 === 'document'
+              ? { 'document': { 'url': _0x575e0e }, 'mimetype': _0x1744fd, 'fileName': `BERA TECH_${_0x566599}.mp4`, 'caption': _0x24d9d1 }
+              : { [_0x566599]: { 'url': _0x575e0e }, 'mimetype': _0x1744fd, 'caption': _0x24d9d1 };
+
+            await _0xde7a32.sendMessage(_0x336b3f, _0x485b96, { 'quoted': _0x2692f7 });
+
+          } catch (error) {
+            console.error("Download Error:", error);
+            _0x1b9510.reply("❌ *An error occurred while downloading. Please try again.*");
           }
-
-          const _0x575e0e = _0x3e2e40.result.download_url;
-          const _0x485b96 = _0x566599 === 'document'
-            ? { 'document': { 'url': _0x575e0e }, 'mimetype': _0x1744fd, 'fileName': `BERA TECH_${_0x566599}.mp4`, 'caption': _0x24d9d1 }
-            : { [_0x566599]: { 'url': _0x575e0e }, 'mimetype': _0x1744fd, 'caption': _0x24d9d1 };
-
-          await _0xde7a32.sendMessage(_0x336b3f, _0x485b96, { 'quoted': _0x2692f7 });
         }
       });
 
-    } catch (_0x5db9ce) {
-      console.error("Error:", _0x5db9ce);
+    } catch (error) {
+      console.error("Error:", error);
       return _0x1b9510.reply("❌ *An error occurred while processing your request.*");
     }
   }
