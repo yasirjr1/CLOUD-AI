@@ -1,8 +1,16 @@
+import config from '../config.cjs';
+
 const antiLeft = {
     enabled: true, // Default: ON
 };
 
-const toggleAntiLeft = async (m, Matrix) => {
+export const toggleAntiLeft = async (m, Matrix) => {
+    const botOwner = config.OWNER_NUMBER + "@s.whatsapp.net"; // Ensure OWNER_NUMBER is in config.cjs
+
+    if (m.sender !== botOwner) {
+        return m.reply("⚠️ *You are not authorized to use this command!*");
+    }
+
     const text = m.body.toLowerCase().trim();
 
     if (text === "antileft on") {
@@ -16,25 +24,17 @@ const toggleAntiLeft = async (m, Matrix) => {
     }
 };
 
-const handleGroupUpdate = async (update, sock) => {
-    if (!antiLeft.enabled) return; // Do nothing if Anti-Left is off
+// Function to re-add members when they leave
+export const handleGroupUpdate = async (Matrix, update) => {
+    if (!antiLeft.enabled) return; // Stop if feature is off
 
     if (update.action === "remove") {
-        const groupMetadata = await sock.groupMetadata(update.id);
-        const botAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
-        const botNumber = sock.user.id.split(":")[0] + "@s.whatsapp.net";
-
-        if (!botAdmins.includes(botNumber)) return; // Exit if bot is not an admin
-
         const userJid = update.participants[0];
-
         try {
-            await sock.groupParticipantsUpdate(update.id, [userJid], "add"); // Add back the user
-            await sock.sendMessage(update.id, { text: `🚨 *Anti-Left Activated!*\n\n@${userJid.split("@")[0]} tried to leave but was added back!`, mentions: [userJid] });
-        } catch (error) {
-            console.error("Failed to re-add user:", error);
+            await Matrix.groupParticipantsUpdate(update.id, [userJid], "add");
+            await Matrix.sendMessage(update.id, { text: `❌ *Leaving is not allowed!* @${userJid.split("@")[0]}, you've been re-added!` }, { mentions: [userJid] });
+        } catch (err) {
+            console.error("Error re-adding user:", err);
         }
     }
 };
-
-export { toggleAntiLeft, handleGroupUpdate };
