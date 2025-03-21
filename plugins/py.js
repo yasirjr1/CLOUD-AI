@@ -1,98 +1,84 @@
-import yts from "yt-search";
-import fetch from "node-fetch";
+const yts = require("yt-search");
+const fetch = require("node-fetch");
+const config = require("../config.cjs");
 
-const play = async (context) => {
-  const { client, m, text, botname, sendReply, sendMediaMessage } = context;
-
-  try {
-    if (!text) {
-      return sendReply(client, m, "❌ Please specify the song you want to download.");
-    }
-
-    await client.sendMessage(m.chat, { react: { text: "⏳", key: m.key } });
-
-    let search = await yts(text);
-    if (!search.all.length) {
-      return sendReply(client, m, "❌ No results found for your query.");
-    }
+module.exports = {
+    name: "play",
+    alias: ["video"], // Allow both 'play' and 'video' triggers
+    category: "downloader",
+    desc: "Download MP3 or MP4 from YouTube",
     
-    let link = search.all[0].url;
-    let thumbnail = search.all[0].thumbnail;
-    
-    const apiList = [
-      `https://keith-api.vercel.app/download/dlmp3?url=${link}`,
-      `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${link}`,
-      `https://apis.davidcyriltech.my.id/youtube/mp3?url=${link}`
-    ];
+    async run(m, client, args) {
+        try {
+            const command = m.body.split(" ")[0].toLowerCase(); // "play" or "video"
+            const query = m.body.split(" ").slice(1).join(" "); // Song/video name
 
-    let audioData = null;
+            if (!["play", "video"].includes(command)) return;
+            if (!query) return client.sendMessage(m.from, { text: "❌ Please provide a search query!" });
 
-    for (const apiUrl of apiList) {
-      try {
-        let response = await fetch(apiUrl);
-        let data = await response.json();
-        if (data.status && data.result) {
-          audioData = {
-            title: data.result.title,
-            downloadUrl: data.result.downloadUrl,
-            format: data.result.format || "mp3",
-            quality: data.result.quality || "Standard",
-          };
-          break;
+            await client.sendMessage(m.from, { react: { text: "⏳", key: m.key } });
+
+            // 🔍 Search for video
+            const searchResults = await yts(query);
+            if (!searchResults.videos.length) return client.sendMessage(m.from, { text: "❌ No results found!" });
+
+            const video = searchResults.videos[0];
+            const videoUrl = video.url;
+            const thumbnailUrl = video.thumbnail;
+            const title = video.title;
+            const duration = video.timestamp;
+
+            // 🌐 API List (Fallback System)
+            const apiList = [
+                `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${videoUrl}`,
+                `https://apis.davidcyriltech.my.id/youtube/mp3?url=${videoUrl}`,
+                `https://keith-api.vercel.app/download/dlmp3?url=${videoUrl}`
+            ];
+            
+            if (command === "video") {
+                apiList.push(
+                    `https://apis.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${videoUrl}`,
+                    `https://apis-keith.vercel.app/download/dlmp4?url=${videoUrl}`
+                );
+            }
+
+            let downloadUrl = null;
+            for (const apiUrl of apiList) {
+                try {
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    if (data.status && data.result && data.result.downloadUrl) {
+                        downloadUrl = data.result.downloadUrl;
+                        break; // Exit loop on first successful API response
+                    }
+                } catch (error) {
+                    console.log(`API failed: ${apiUrl}`);
+                }
+            }
+
+            if (!downloadUrl) return client.sendMessage(m.from, { text: "❌ Download failed, please try again." });
+
+            // 🖼️ Send Thumbnail First
+            await client.sendMessage(m.from, {
+                image: { url: thumbnailUrl },
+                caption: `🎵 *Title:* ${title}\n⏳ *Duration:* ${duration}\n\nRegards, BruceBera`
+            });
+
+            // 🎵 Send Audio or Video
+            const messageType = command === "play" ? "audio" : "video";
+            const mimeType = command === "play" ? "audio/mpeg" : "video/mp4";
+
+            await client.sendMessage(m.from, {
+                [messageType]: { url: downloadUrl },
+                mimetype: mimeType,
+                caption: `📥 Downloaded in ${messageType === "audio" ? "Audio" : "Video"} Format`
+            });
+
+            await client.sendMessage(m.from, { react: { text: "✅", key: m.key } });
+
+        } catch (error) {
+            console.error("Error:", error);
+            return client.sendMessage(m.from, { text: "❌ An error occurred while processing your request." });
         }
-      } catch (error) {
-        console.log(`API failed: ${apiUrl}`);
-      }
     }
-
-    if (!audioData) {
-      await client.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
-      return sendReply(client, m, "❌ Unable to fetch the song. Please try again later.");
-    }
-
-    // Send thumbnail first
-    await sendMediaMessage(client, m, {
-      image: { url: thumbnail },
-      caption: `
-╭═════════════════⊷
-║ 🎵 *Title:* ${audioData.title}
-║ 📁 *Format:* ${audioData.format}
-║ 🔊 *Quality:* ${audioData.quality}
-╰═════════════════⊷
-📥 *Downloading...*\n\nRegards, BruceBera
-`,
-    }, { quoted: m });
-
-    // Send audio file
-    await client.sendMessage(
-      m.chat,
-      {
-        audio: { url: audioData.downloadUrl },
-        mimetype: "audio/mpeg",
-        ptt: false,
-        fileName: `${audioData.title.replace(/[^a-zA-Z0-9 ]/g, "")}.mp3`
-      },
-      { quoted: m }
-    );
-
-    // Send audio document
-    await client.sendMessage(
-      m.chat,
-      {
-        document: { url: audioData.downloadUrl },
-        mimetype: "audio/mp3",
-        fileName: `${audioData.title.replace(/[^a-zA-Z0-9 ]/g, "")}.mp3`,
-      },
-      { quoted: m }
-    );
-
-    await client.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
-
-  } catch (error) {
-    console.error(error);
-    await client.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
-    return sendReply(client, m, "❌ An error occurred while processing your request.");
-  }
 };
-
-export default play;
