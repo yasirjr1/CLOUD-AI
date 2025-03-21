@@ -1,33 +1,43 @@
 import fetch from 'node-fetch';
 import config from '../../config.cjs';
 
-const gptCommand = async (message, client) => {
-    const userMessage = message.body.trim();
-    const triggerWords = ["gpt", "ai", "bera"]; // Non-prefix trigger words
+let chatbotEnabled = true; // Default enabled
 
-    // Ensure the message starts with a trigger word and has a query
-    const match = userMessage.match(/^(gpt|ai|bera)\s+(.+)/i);
-    if (!match) return; // Ignore messages that don't match the pattern
-
-    const query = match[2].trim();
-    if (!query) {
-        await client.sendMessage(message.from, { text: "⚠️ Please provide a prompt. Example: `gpt What is life?`" }, { quoted: message });
-        return;
+const chatbot = async (m, bot) => {
+    const text = m.body.trim();
+    
+    if (text === "gptmode off") {
+        chatbotEnabled = false;
+        return m.reply("✅ *AI Chatbot has been disabled!*");
     }
+    
+    if (text === "gptmode on") {
+        chatbotEnabled = true;
+        return m.reply("✅ *AI Chatbot is now active!*");
+    }
+    
+    if (!chatbotEnabled) return;
 
-    try {
-        const response = await fetch(`https://api.dreaded.site/api/chatgpt?text=${encodeURIComponent(query)}`);
-        const data = await response.json();
+    if (text.startsWith("gpt")) {
+        const query = text.replace(/^gpt\s*/, "").trim();
+        if (!query) return m.reply("❌ *Please enter a message!*");
+        
+        await m.React('🤖');
 
-        if (!response.ok || !data.success || !data.result) {
-            throw new Error("Invalid API response");
+        try {
+            const response = await fetch(`https://api.dreaded.site/api/chatgpt?text=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if (data && data.result) {
+                await bot.sendMessage(m.from, { text: `🤖 *AI Response:*\n\n${data.result}` }, { quoted: m });
+            } else {
+                m.reply("⚠️ *AI is not responding right now. Try again later!*");
+            }
+        } catch (err) {
+            console.error("Chatbot Error:", err);
+            m.reply("❌ *An error occurred while fetching AI response.*");
         }
-
-        await client.sendMessage(message.from, { text: `🤖 *AI Response:*\n\n${data.result}` }, { quoted: message });
-    } catch (error) {
-        console.error("GPT Error:", error);
-        await client.sendMessage(message.from, { text: "❌ Failed to fetch response. Try again later!" }, { quoted: message });
     }
 };
 
-export default gptCommand;
+export default chatbot;
