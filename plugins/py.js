@@ -1,65 +1,89 @@
 import ytSearch from 'yt-search';
 import fetch from 'node-fetch';
 
-const play = async (_0x1b9510, _0xde7a32) => {
-    const _0x2c2c73 = _0x1b9510.body.toLowerCase().split(" ");
-    const _0x528617 = _0x2c2c73[0]; // First word of the message
-    const _0x5809fc = _0x2c2c73.slice(1).join(" ").trim(); // Rest of the message
+const play = async (msg, client) => {
+    const args = msg.body.toLowerCase().split(" ");
+    const command = args[0]; // First word (either "play" or "video")
+    const query = args.slice(1).join(" ").trim(); // Rest of the message
 
-    if (_0x528617 !== 'play') {
+    if (command !== 'play' && command !== 'video') {
         return;
     }
 
-    if (!_0x5809fc) {
-        return _0x1b9510.reply("❌ Please provide a search query!");
+    if (!query) {
+        return msg.reply("❌ Please provide a search query!");
     }
 
-    await _0x1b9510.React('⏳');
+    await msg.React('⏳');
 
     try {
-        // Search for the video
-        const _0x589357 = await ytSearch(_0x5809fc);
-        if (!_0x589357.videos.length) {
-            return _0x1b9510.reply("❌ No results found!");
+        // Search YouTube
+        const searchResults = await ytSearch(query);
+        if (!searchResults.videos.length) {
+            return msg.reply("❌ No results found!");
         }
 
-        const _0x24d96b = _0x589357.videos[0]; // First result
-        const _0xac0071 = _0x24d96b.url; // Video URL
-        const _0xthumbnail = _0x24d96b.thumbnail; // Video thumbnail
-        const _0x39489e = `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${_0xac0071}`;
+        const video = searchResults.videos[0]; // First search result
+        const videoUrl = video.url;
+        const thumbnailUrl = video.thumbnail;
 
         // Fetch and process thumbnail
-        const _0xthumbnailBuffer = await fetch(_0xthumbnail).then(res => res.buffer());
+        const thumbnailBuffer = await fetch(thumbnailUrl).then(res => res.buffer());
 
-        // Send thumbnail first
-        await _0xde7a32.sendMessage(_0x1b9510.from, {
-            image: _0xthumbnailBuffer,
-            caption: `🎵 *Title:* ${_0x24d96b.title}\n⏳ *Duration:* ${_0x24d96b.timestamp}\n\nRegards, BruceBera`,
+        // Send Thumbnail First
+        await client.sendMessage(msg.from, {
+            image: thumbnailBuffer,
+            caption: `🎵 *Title:* ${video.title}\n⏳ *Duration:* ${video.timestamp}\n🔗 *Link:* ${videoUrl}\n\nRegards, BruceBera`,
             footer: "Regards, BruceBera"
-        }, { quoted: _0x1b9510 });
+        }, { quoted: msg });
 
-        // Fetch the download link
-        const _0x15ce39 = await fetch(_0x39489e);
-        const _0x3e2e40 = await _0x15ce39.json();
+        // Define API URLs (MP3 for "play", MP4 for "video")
+        const apiUrls = command === 'play'
+            ? [
+                `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${videoUrl}`,
+                `https://apis.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${videoUrl}`,
+                `https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`
+            ]
+            : [
+                `https://apis.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${videoUrl}`,
+                `https://apis-keith.vercel.app/download/dlmp4?url=${videoUrl}`
+            ];
 
-        console.log("API Response:", _0x3e2e40); // Debugging response
+        let downloadUrl = null;
+        let fileType = command === 'play' ? "audio/mpeg" : "video/mp4";
+        let captionText = command === 'play' ? "📥 *Downloaded in Audio Format*" : "📥 *Downloaded in Video Format*";
 
-        if (!_0x3e2e40.url) {
-            return _0x1b9510.reply("❌ Download failed, please try again.");
+        // Try each API until one works
+        for (let apiUrl of apiUrls) {
+            try {
+                const response = await fetch(apiUrl);
+                const jsonResponse = await response.json();
+
+                console.log("API Response:", jsonResponse); // Debugging
+
+                if (jsonResponse.url) {
+                    downloadUrl = jsonResponse.url;
+                    break; // Stop checking if we find a working link
+                }
+            } catch (error) {
+                console.error(`API Failed: ${apiUrl}`, error);
+            }
         }
 
-        const _0x575e0e = _0x3e2e40.url; // Direct MP3 link
+        if (!downloadUrl) {
+            return msg.reply("❌ All APIs failed to fetch the file. Please try again later.");
+        }
 
-        // Send audio separately after the thumbnail
-        await _0xde7a32.sendMessage(_0x1b9510.from, {
-            audio: { url: _0x575e0e },
-            mimetype: "audio/mp4",
-            caption: "📥 *Downloaded in Audio Format*"
-        }, { quoted: _0x1b9510 });
+        // Send the audio or video
+        await client.sendMessage(msg.from, {
+            [command]: { url: downloadUrl },
+            mimetype: fileType,
+            caption: captionText
+        }, { quoted: msg });
 
-    } catch (_0x5db9ce) {
-        console.error("Error:", _0x5db9ce);
-        return _0x1b9510.reply("❌ An error occurred while processing your request.");
+    } catch (error) {
+        console.error("Error:", error);
+        return msg.reply("❌ An error occurred while processing your request.");
     }
 };
 
