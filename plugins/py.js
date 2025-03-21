@@ -1,86 +1,98 @@
-import ytdl from 'ytdl-core';
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
+import yts from "yt-search";
+import fetch from "node-fetch";
 
-const downloadFromAPIs = async (videoUrl, format) => {
+const play = async (context) => {
+  const { client, m, text, botname, sendReply, sendMediaMessage } = context;
+
+  try {
+    if (!text) {
+      return sendReply(client, m, "❌ Please specify the song you want to download.");
+    }
+
+    await client.sendMessage(m.chat, { react: { text: "⏳", key: m.key } });
+
+    let search = await yts(text);
+    if (!search.all.length) {
+      return sendReply(client, m, "❌ No results found for your query.");
+    }
+    
+    let link = search.all[0].url;
+    let thumbnail = search.all[0].thumbnail;
+    
     const apiList = [
-        format === 'audio'
-            ? `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${videoUrl}`
-            : `https://apis.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${videoUrl}`,
-        format === 'audio'
-            ? `https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`
-            : `https://apis-keith.vercel.app/download/dlmp4?url=${videoUrl}`,
-        format === 'audio'
-            ? `https://apis.davidcyriltech.my.id/youtube/mp3?url=${videoUrl}`
-            : null,
-        format === 'audio'
-            ? `https://keith-api.vercel.app/download/dlmp3?url=${videoUrl}`
-            : null
-    ].filter(Boolean); // Remove null values
+      `https://keith-api.vercel.app/download/dlmp3?url=${link}`,
+      `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${link}`,
+      `https://apis.davidcyriltech.my.id/youtube/mp3?url=${link}`
+    ];
+
+    let audioData = null;
 
     for (const apiUrl of apiList) {
-        try {
-            const response = await axios.get(apiUrl);
-            if (response.data.url) {
-                return response.data.url;
-            }
-        } catch (error) {
-            console.log(`API failed: ${apiUrl}`);
+      try {
+        let response = await fetch(apiUrl);
+        let data = await response.json();
+        if (data.status && data.result) {
+          audioData = {
+            title: data.result.title,
+            downloadUrl: data.result.downloadUrl,
+            format: data.result.format || "mp3",
+            quality: data.result.quality || "Standard",
+          };
+          break;
         }
+      } catch (error) {
+        console.log(`API failed: ${apiUrl}`);
+      }
     }
-    throw new Error("❌ Download failed from all APIs.");
-};
 
-const play = async (message, sender) => {
-    try {
-        const words = message.body.toLowerCase().split(" ");
-        const command = words[0]; // "play" or "video"
-        const query = words.slice(1).join(" ").trim();
-
-        if (command !== 'play' && command !== 'video') return;
-
-        if (!query) {
-            return sender.reply("❌ Please provide a search query!");
-        }
-
-        await sender.react('⏳'); // Reaction for processing
-
-        // Search YouTube
-        const { data } = await axios.get(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
-        const videoIdMatch = data.match(/"videoId":"(.*?)"/);
-        if (!videoIdMatch) return sender.reply("❌ No results found!");
-
-        const videoUrl = `https://www.youtube.com/watch?v=${videoIdMatch[1]}`;
-        const format = command === 'play' ? 'audio' : 'video';
-        const info = await ytdl.getInfo(videoUrl);
-
-        // Extract details
-        const title = info.videoDetails.title;
-        const thumbnail = info.videoDetails.thumbnails.pop().url;
-
-        // Send thumbnail first
-        await sender.sendMessage({
-            image: { url: thumbnail },
-            caption: `🎵 *Title:* ${title}\n\n📥 *Downloading...*\n\nRegards, BruceBera`
-        });
-
-        // Download using APIs
-        const mediaUrl = await downloadFromAPIs(videoUrl, format);
-
-        // Send media file
-        await sender.sendMessage({
-            [format]: { url: mediaUrl },
-            mimetype: format === 'audio' ? 'audio/mpeg' : 'video/mp4',
-            caption: `📥 *Downloaded in ${format.toUpperCase()} Format*\n\nRegards, BruceBera`
-        });
-
-        await sender.react('✅'); // Success reaction
-
-    } catch (error) {
-        console.error('Error:', error);
-        sender.reply("❌ An error occurred while processing your request.");
+    if (!audioData) {
+      await client.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
+      return sendReply(client, m, "❌ Unable to fetch the song. Please try again later.");
     }
+
+    // Send thumbnail first
+    await sendMediaMessage(client, m, {
+      image: { url: thumbnail },
+      caption: `
+╭═════════════════⊷
+║ 🎵 *Title:* ${audioData.title}
+║ 📁 *Format:* ${audioData.format}
+║ 🔊 *Quality:* ${audioData.quality}
+╰═════════════════⊷
+📥 *Downloading...*\n\nRegards, BruceBera
+`,
+    }, { quoted: m });
+
+    // Send audio file
+    await client.sendMessage(
+      m.chat,
+      {
+        audio: { url: audioData.downloadUrl },
+        mimetype: "audio/mpeg",
+        ptt: false,
+        fileName: `${audioData.title.replace(/[^a-zA-Z0-9 ]/g, "")}.mp3`
+      },
+      { quoted: m }
+    );
+
+    // Send audio document
+    await client.sendMessage(
+      m.chat,
+      {
+        document: { url: audioData.downloadUrl },
+        mimetype: "audio/mp3",
+        fileName: `${audioData.title.replace(/[^a-zA-Z0-9 ]/g, "")}.mp3`,
+      },
+      { quoted: m }
+    );
+
+    await client.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
+
+  } catch (error) {
+    console.error(error);
+    await client.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
+    return sendReply(client, m, "❌ An error occurred while processing your request.");
+  }
 };
 
 export default play;
