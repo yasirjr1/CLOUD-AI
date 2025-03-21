@@ -20,7 +20,7 @@ const play = async (_0x1b9510, _0xde7a32) => {
       }
       
       const _0x24d96b = _0x589357.videos[0x0];
-      const _0x384e8c = `\n\n╭━━━〔 *ʙᴇʀᴀ ᴛᴇᴄʜ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ* 〕━━━\n\n┃▸ *Title:* ${_0x24d96b.title}\n\n┃▸ *Duration:* ${_0x24d96b.timestamp}\n\n┃▸ *Views:* ${_0x24d96b.views}\n\n┃▸ *Channel:* ${_0x24d96b.author.name}\n\n╰━━━━━━━━━━━━━━━━━━\n\n📥 *Downloading automatically...*`;
+      const _0x384e8c = `\n\n╭━━━〔 *ᴄʟᴏᴜᴅ ᴀɪ ᴅᴏᴡɴʟᴏᴅᴇʀ* 〕━━━\n\n┃▸ *Title:* ${_0x24d96b.title}\n\n┃▸ *Duration:* ${_0x24d96b.timestamp}\n\n┃▸ *Views:* ${_0x24d96b.views}\n\n┃▸ *Channel:* ${_0x24d96b.author.name}\n\n╰━━━━━━━━━━━━━━━━━━\n\n📥 *Downloading automatically...*`;
 
       await _0xde7a32.sendMessage(_0x1b9510.from, { 
         image: { url: _0x24d96b.thumbnail }, 
@@ -30,7 +30,7 @@ const play = async (_0x1b9510, _0xde7a32) => {
       const _0xac0071 = _0x24d96b.url;
       const _0x39489e = _0x5809fc.startsWith('video') 
         ? `https://apis.davidcyriltech.my.id/download/ytmp4?url=${_0xac0071}` 
-        : `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`;
+        : `https://apis-keith.vercel.app/download/dlmp3?url=${_0xac0071}`;
         
       const _0x566599 = _0x5809fc.startsWith('video') ? "video" : "audio";
       const _0x1744fd = _0x5809fc.startsWith('video') ? "video/mp4" : "audio/mpeg";
