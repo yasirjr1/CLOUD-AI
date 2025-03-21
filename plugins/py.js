@@ -41,16 +41,19 @@ const play = async (_0x1b9510, _0xde7a32) => {
         // Fetch the download link
         const _0x15ce39 = await fetch(_0x39489e);
         const _0x3e2e40 = await _0x15ce39.json();
-        const _0x575e0e = _0x3e2e40.url; // Direct MP3 link
 
-        if (!_0x575e0e) {
+        console.log("API Response:", _0x3e2e40); // Debugging response
+
+        if (!_0x3e2e40.url) {
             return _0x1b9510.reply("❌ Download failed, please try again.");
         }
+
+        const _0x575e0e = _0x3e2e40.url; // Direct MP3 link
 
         // Send audio separately after the thumbnail
         await _0xde7a32.sendMessage(_0x1b9510.from, {
             audio: { url: _0x575e0e },
-            mimetype: "audio/mpeg",
+            mimetype: "audio/mp4",
             caption: "📥 *Downloaded in Audio Format*"
         }, { quoted: _0x1b9510 });
 
