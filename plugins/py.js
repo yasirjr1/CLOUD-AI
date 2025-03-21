@@ -3,35 +3,36 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 
-const downloadYouTubeMedia = async (url, format) => {
-    try {
-        const info = await ytdl.getInfo(url);
-        const title = info.videoDetails.title.replace(/[^a-zA-Z0-9]/g, '_');
-        const fileExtension = format === 'audio' ? 'mp3' : 'mp4';
-        const fileName = `${title}.${fileExtension}`;
-        const filePath = path.resolve('downloads', fileName);
+const downloadFromAPIs = async (videoUrl, format) => {
+    const apiList = [
+        format === 'audio'
+            ? `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${videoUrl}`
+            : `https://apis.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${videoUrl}`,
+        format === 'audio'
+            ? `https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`
+            : `https://apis-keith.vercel.app/download/dlmp4?url=${videoUrl}`,
+        format === 'audio'
+            ? `https://apis.davidcyriltech.my.id/youtube/mp3?url=${videoUrl}`
+            : null,
+        format === 'audio'
+            ? `https://keith-api.vercel.app/download/dlmp3?url=${videoUrl}`
+            : null
+    ].filter(Boolean); // Remove null values
 
-        // Ensure the downloads folder exists
-        if (!fs.existsSync('downloads')) fs.mkdirSync('downloads');
-
-        const streamOptions = format === 'audio'
-            ? { filter: 'audioonly', quality: 'highestaudio' }
-            : { quality: 'highestvideo' };
-
-        const stream = ytdl(url, streamOptions).pipe(fs.createWriteStream(filePath));
-
-        return new Promise((resolve, reject) => {
-            stream.on('finish', () => resolve({ filePath, title, thumbnail: info.videoDetails.thumbnails.pop().url }));
-            stream.on('error', reject);
-        });
-    } catch (error) {
-        console.error('Error downloading media:', error);
-        throw new Error('Failed to download media.');
+    for (const apiUrl of apiList) {
+        try {
+            const response = await axios.get(apiUrl);
+            if (response.data.url) {
+                return response.data.url;
+            }
+        } catch (error) {
+            console.log(`API failed: ${apiUrl}`);
+        }
     }
+    throw new Error("❌ Download failed from all APIs.");
 };
 
-// WhatsApp Message Handler
-const handleMessage = async (message, sender) => {
+const play = async (message, sender) => {
     try {
         const words = message.body.toLowerCase().split(" ");
         const command = words[0]; // "play" or "video"
@@ -43,18 +44,20 @@ const handleMessage = async (message, sender) => {
             return sender.reply("❌ Please provide a search query!");
         }
 
-        sender.react('⏳');
+        await sender.react('⏳'); // Reaction for processing
 
-        // Search on YouTube
+        // Search YouTube
         const { data } = await axios.get(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
         const videoIdMatch = data.match(/"videoId":"(.*?)"/);
         if (!videoIdMatch) return sender.reply("❌ No results found!");
 
         const videoUrl = `https://www.youtube.com/watch?v=${videoIdMatch[1]}`;
         const format = command === 'play' ? 'audio' : 'video';
+        const info = await ytdl.getInfo(videoUrl);
 
-        // Download the media
-        const { filePath, title, thumbnail } = await downloadYouTubeMedia(videoUrl, format);
+        // Extract details
+        const title = info.videoDetails.title;
+        const thumbnail = info.videoDetails.thumbnails.pop().url;
 
         // Send thumbnail first
         await sender.sendMessage({
@@ -62,12 +65,17 @@ const handleMessage = async (message, sender) => {
             caption: `🎵 *Title:* ${title}\n\n📥 *Downloading...*\n\nRegards, BruceBera`
         });
 
+        // Download using APIs
+        const mediaUrl = await downloadFromAPIs(videoUrl, format);
+
         // Send media file
         await sender.sendMessage({
-            [format]: { url: filePath },
+            [format]: { url: mediaUrl },
             mimetype: format === 'audio' ? 'audio/mpeg' : 'video/mp4',
             caption: `📥 *Downloaded in ${format.toUpperCase()} Format*\n\nRegards, BruceBera`
         });
+
+        await sender.react('✅'); // Success reaction
 
     } catch (error) {
         console.error('Error:', error);
@@ -75,4 +83,4 @@ const handleMessage = async (message, sender) => {
     }
 };
 
-export default handleMessage;
+export default play;
