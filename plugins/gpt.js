@@ -1,49 +1,39 @@
 import fetch from 'node-fetch';
 import config from '../../config.cjs';
 
-let chatbotEnabled = true; // Default enabled
+const gpt = async (message, client) => {
+  const text = message.body.trim().toLowerCase();
 
-const chatbot = async (m, bot) => {
-    const text = m.message?.conversation?.trim() || m.message?.extendedTextMessage?.text?.trim();
-    if (!text) return;
+  if (!text.startsWith('gpt')) return;
+  
+  const query = text.replace(/^gpt\s*/, "").trim();
+  if (!query) return message.reply("❌ *Please provide a prompt!*");
 
-    // Toggle AI mode
-    if (text === "gptmode off") {
-        chatbotEnabled = false;
-        return bot.sendMessage(m.key.remoteJid, { text: "✅ *AI Chatbot has been disabled!*" });
+  await message.React('⏳');
+
+  const gptAPIs = [
+    `https://api.dreaded.site/api/chatgpt?text=${encodeURIComponent(query)}`,
+    `https://someotherfreeapi.com/chat?query=${encodeURIComponent(query)}`,
+    `https://anotherbackupapi.com/ask?prompt=${encodeURIComponent(query)}`
+  ];
+
+  let responseText = "❌ *Failed to fetch response, try again!*";
+
+  for (const apiUrl of gptAPIs) {
+    try {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+
+      if (data && data.response) {
+        responseText = data.response;
+        break; // Stop trying once a valid response is received
+      }
+    } catch (error) {
+      console.error("API Error:", error);
     }
+  }
 
-    if (text === "gptmode on") {
-        chatbotEnabled = true;
-        return bot.sendMessage(m.key.remoteJid, { text: "✅ *AI Chatbot is now active!*" });
-    }
-
-    if (!chatbotEnabled) return;
-
-    // GPT Command
-    if (text.startsWith("gpt")) {
-        const query = text.replace(/^gpt\s*/, "").trim();
-        if (!query) return bot.sendMessage(m.key.remoteJid, { text: "❌ *Please enter a message!*" });
-
-        // Send reaction
-        await bot.sendMessage(m.key.remoteJid, {
-            react: { text: "🤖", key: m.key }
-        });
-
-        try {
-            const response = await fetch(`https://api.dreaded.site/api/chatgpt?text=${encodeURIComponent(query)}`);
-            const data = await response.json();
-
-            if (data?.result) {
-                await bot.sendMessage(m.key.remoteJid, { text: `🤖 *AI Response:*\n\n${data.result}` }, { quoted: m });
-            } else {
-                bot.sendMessage(m.key.remoteJid, { text: "⚠️ *AI is not responding right now. Try again later!*" });
-            }
-        } catch (err) {
-            console.error("Chatbot Error:", err);
-            bot.sendMessage(m.key.remoteJid, { text: "❌ *An error occurred while fetching AI response.*" });
-        }
-    }
+  await client.sendMessage(message.from, { text: `🤖 *AI Response:*\n\n${responseText}` }, { quoted: message });
 };
 
-export default chatbot;
+export default gpt;
