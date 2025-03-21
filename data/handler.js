@@ -4,8 +4,9 @@ import fs from 'fs/promises';
 import config from '../config.cjs';
 import { smsg } from '../lib/myfunc.cjs';
 import { handleAntilink } from './antilink.js';
-import { fileURLToPath } from 'url';
+import { toggleAntiLeft, handleGroupUpdate } from '../plugins/antileft.js'; // ✅ ADDED ANTI-LEFT
 import { shengChat, shengCommand } from '../lib/shengMode.js'; // Integrated Sheng AI
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,9 +43,14 @@ const Handler = async (chatUpdate, sock, logger) => {
 
         await handleAntilink(m, sock, logger, isBotAdmins, isAdmins, isCreator);
 
-        // **Sheng Mode Handling**
-        await shengCommand(m); // Check for "Sheng on/off" triggers
-        await shengChat(m); // Process Sheng AI responses
+        // ✅ ANTI-LEFT TOGGLE (OWNER ONLY)
+        if (m.body.toLowerCase() === "antileft on" || m.body.toLowerCase() === "antileft off") {
+            await toggleAntiLeft(m, sock);
+        }
+
+        // ✅ Sheng Mode Handling
+        await shengCommand(m);
+        await shengChat(m);
 
         // ✅ Corrected Plugin Folder Path
         const pluginDir = path.resolve(__dirname, '..', 'plugins');
@@ -70,6 +76,13 @@ const Handler = async (chatUpdate, sock, logger) => {
     } catch (e) {
         console.error(e);
     }
+};
+
+// ✅ LISTEN FOR GROUP PARTICIPANT UPDATES (ANTI-LEFT)
+Handler.listenGroupUpdate = (sock) => {
+    sock.ev.on("group-participants.update", async (update) => {
+        await handleGroupUpdate(sock, update);
+    });
 };
 
 export default Handler;
