@@ -1,90 +1,78 @@
-import ytSearch from 'yt-search';
-import fetch from 'node-fetch';
+import ytdl from 'ytdl-core';
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
 
-const play = async (msg, client) => {
-    const args = msg.body.toLowerCase().split(" ");
-    const command = args[0]; // First word (either "play" or "video")
-    const query = args.slice(1).join(" ").trim(); // Rest of the message
-
-    if (command !== 'play' && command !== 'video') {
-        return;
-    }
-
-    if (!query) {
-        return msg.reply("❌ Please provide a search query!");
-    }
-
-    await msg.React('⏳');
-
+const downloadYouTubeMedia = async (url, format) => {
     try {
-        // Search YouTube
-        const searchResults = await ytSearch(query);
-        if (!searchResults.videos.length) {
-            return msg.reply("❌ No results found!");
-        }
+        const info = await ytdl.getInfo(url);
+        const title = info.videoDetails.title.replace(/[^a-zA-Z0-9]/g, '_');
+        const fileExtension = format === 'audio' ? 'mp3' : 'mp4';
+        const fileName = `${title}.${fileExtension}`;
+        const filePath = path.resolve('downloads', fileName);
 
-        const video = searchResults.videos[0]; // First search result
-        const videoUrl = video.url;
-        const thumbnailUrl = video.thumbnail;
+        // Ensure the downloads folder exists
+        if (!fs.existsSync('downloads')) fs.mkdirSync('downloads');
 
-        // Fetch and process thumbnail
-        const thumbnailBuffer = await fetch(thumbnailUrl).then(res => res.buffer());
+        const streamOptions = format === 'audio'
+            ? { filter: 'audioonly', quality: 'highestaudio' }
+            : { quality: 'highestvideo' };
 
-        // Send Thumbnail First
-        await client.sendMessage(msg.from, {
-            image: thumbnailBuffer,
-            caption: `🎵 *Title:* ${video.title}\n⏳ *Duration:* ${video.timestamp}\n🔗 *Link:* ${videoUrl}\n\nRegards, BruceBera`,
-            footer: "Regards, BruceBera"
-        }, { quoted: msg });
+        const stream = ytdl(url, streamOptions).pipe(fs.createWriteStream(filePath));
 
-        // Define API URLs (MP3 for "play", MP4 for "video")
-        const apiUrls = command === 'play'
-            ? [
-                `https://bandahealimaree-api-ytdl.hf.space/api/ytmp3?url=${videoUrl}`,
-                `https://apis.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${videoUrl}`,
-                `https://apis-keith.vercel.app/download/dlmp3?url=${videoUrl}`
-            ]
-            : [
-                `https://apis.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${videoUrl}`,
-                `https://apis-keith.vercel.app/download/dlmp4?url=${videoUrl}`
-            ];
-
-        let downloadUrl = null;
-        let fileType = command === 'play' ? "audio/mpeg" : "video/mp4";
-        let captionText = command === 'play' ? "📥 *Downloaded in Audio Format*" : "📥 *Downloaded in Video Format*";
-
-        // Try each API until one works
-        for (let apiUrl of apiUrls) {
-            try {
-                const response = await fetch(apiUrl);
-                const jsonResponse = await response.json();
-
-                console.log("API Response:", jsonResponse); // Debugging
-
-                if (jsonResponse.url) {
-                    downloadUrl = jsonResponse.url;
-                    break; // Stop checking if we find a working link
-                }
-            } catch (error) {
-                console.error(`API Failed: ${apiUrl}`, error);
-            }
-        }
-
-        if (!downloadUrl) {
-            return msg.reply("❌ All APIs failed to fetch the file. Please try again later.");
-        }
-
-        // Send the audio or video
-        await client.sendMessage(msg.from, {
-            [command]: { url: downloadUrl },
-            mimetype: fileType,
-            caption: captionText
-        }, { quoted: msg });
-
+        return new Promise((resolve, reject) => {
+            stream.on('finish', () => resolve({ filePath, title, thumbnail: info.videoDetails.thumbnails.pop().url }));
+            stream.on('error', reject);
+        });
     } catch (error) {
-        console.error("Error:", error);
-        return msg.reply("❌ An error occurred while processing your request.");
+        console.error('Error downloading media:', error);
+        throw new Error('Failed to download media.');
     }
 };
 
-export default play;
+// WhatsApp Message Handler
+const handleMessage = async (message, sender) => {
+    try {
+        const words = message.body.toLowerCase().split(" ");
+        const command = words[0]; // "play" or "video"
+        const query = words.slice(1).join(" ").trim();
+
+        if (command !== 'play' && command !== 'video') return;
+
+        if (!query) {
+            return sender.reply("❌ Please provide a search query!");
+        }
+
+        sender.react('⏳');
+
+        // Search on YouTube
+        const { data } = await axios.get(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
+        const videoIdMatch = data.match(/"videoId":"(.*?)"/);
+        if (!videoIdMatch) return sender.reply("❌ No results found!");
+
+        const videoUrl = `https://www.youtube.com/watch?v=${videoIdMatch[1]}`;
+        const format = command === 'play' ? 'audio' : 'video';
+
+        // Download the media
+        const { filePath, title, thumbnail } = await downloadYouTubeMedia(videoUrl, format);
+
+        // Send thumbnail first
+        await sender.sendMessage({
+            image: { url: thumbnail },
+            caption: `🎵 *Title:* ${title}\n\n📥 *Downloading...*\n\nRegards, BruceBera`
+        });
+
+        // Send media file
+        await sender.sendMessage({
+            [format]: { url: filePath },
+            mimetype: format === 'audio' ? 'audio/mpeg' : 'video/mp4',
+            caption: `📥 *Downloaded in ${format.toUpperCase()} Format*\n\nRegards, BruceBera`
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        sender.reply("❌ An error occurred while processing your request.");
+    }
+};
+
+export default handleMessage;
