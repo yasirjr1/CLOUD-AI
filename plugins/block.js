@@ -1,38 +1,49 @@
-import config from '../config.cjs';
+import config from '../../config.cjs';
 
-const block = async (m, gss) => {
+const blockUnblock = async (m, gss) => {
   try {
     const botNumber = await gss.decodeJid(gss.user.id);
     const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net'].includes(m.sender);
 
-    // Split the message into words and extract the command and remaining text
-    const parts = m.body.trim().split(' ');
-    const cmd = parts[0].toLowerCase();
-    const text = parts.slice(1).join(' ').trim();
+    // Extract first word as command
+    const args = m.body.trim().split(/\s+/);
+    const cmd = args[0].toLowerCase();
+    const text = args.slice(1).join(' '); // The rest of the message
 
-    // Only proceed if the command is exactly "block"
-    if (cmd !== 'block') return;
-    
-    if (!isCreator) return m.reply("*ᴏᴡɴᴇʀ ᴄᴏᴍᴍᴀɴᴅ*");
+    const validCommands = ['block', 'unblock'];
+    if (!validCommands.includes(cmd)) return; // Ignore if not a valid command
 
-    // Determine the target user: check if a user was mentioned, if the message was a reply, or if a number is provided in the text.
-    let users;
-    if (m.mentionedJid && m.mentionedJid[0]) {
-      users = m.mentionedJid[0];
-    } else if (m.quoted) {
-      users = m.quoted.sender;
+    if (!isCreator) return m.reply("*📛 THIS IS AN OWNER COMMAND*");
+
+    let userToBlockUnblock;
+
+    // Check if a number or mention is provided after the command
+    if (text) {
+      userToBlockUnblock = text.replace(/[^0-9]/g, '') + '@s.whatsapp.net'; // Extract numbers and append domain
     } else {
-      // Extract numbers from the additional text and form a WhatsApp ID
-      users = text.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
+      // If no number, check for mentioned users or quoted sender
+      userToBlockUnblock = m.mentionedJid?.[0] || (m.quoted ? m.quoted.sender : null);
     }
-    
-    await gss.updateBlockStatus(users, 'block')
-      .then((res) => m.reply(`Blocked ${users.split('@')[0]} successfully.`))
-      .catch((err) => m.reply(`Failed to block user: ${err}`));
+
+    // If no user is provided, return a helpful message
+    if (!userToBlockUnblock) {
+      return m.reply("Please provide a valid number or mention the user to block/unblock.");
+    }
+
+    // Perform block or unblock based on the command
+    if (cmd === 'block') {
+      await gss.updateBlockStatus(userToBlockUnblock, 'block')
+        .then(() => m.reply(`Blocked @${userToBlockUnblock.split('@')[0]} successfully.`))
+        .catch((err) => m.reply(`Failed to block user: ${err}`));
+    } else if (cmd === 'unblock') {
+      await gss.updateBlockStatus(userToBlockUnblock, 'unblock')
+        .then(() => m.reply(`Unblocked @${userToBlockUnblock.split('@')[0]} successfully.`))
+        .catch((err) => m.reply(`Failed to unblock user: ${err}`));
+    }
   } catch (error) {
     console.error('Error:', error);
     m.reply('An error occurred while processing the command.');
   }
 };
 
-export default block;
+export default blockUnblock;
