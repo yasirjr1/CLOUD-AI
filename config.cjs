@@ -39,7 +39,13 @@ const config = {
 
   // Default Profile Picture (used when a profile pic is unavailable)
   defaultProfilePicture: "https://files.catbox.moe/6c2p2w.jpg", // Replace with a real default image URL
-
+commands: {
+  elementInfo: {
+    enabled: true, // Toggleable option
+    path: './plugins/elementInfo.js',
+    noPrefix: true
+  }
+    }
   // 🔧 Commands Configuration
   commands: {
     devContacts: {
