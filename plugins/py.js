@@ -31,7 +31,7 @@ const play = async (_0x1b9510, _0xde7a32) => {
 
       // Define MP4 & MP3 API sources
       const _0xapiMp4 = [
-        `https://api-rin-tohsaka.vercel.app/download/ytmp4?url=${_0xac0071}`,
+        `https://apis.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${_0xac0071}`,
         `https://apis.davidcyriltech.my.id/download/ytmp4?url=${_0xac0071}`,
         `https://www.dark-yasiya-api.site/download/ytmp4?url=${_0xac0071}`,
         `https://api.giftedtech.web.id/api/download/dlmp4?url=${_0xac0071}&apikey=gifted-md`
