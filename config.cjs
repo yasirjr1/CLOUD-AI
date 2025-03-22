@@ -35,7 +35,10 @@ const config = {
     "We ain't making it past 21...",
     "I'm a jealous boy, I really feel like John Lennon...",
     "Took a pill in Ibiza to show Avicii I was cool..."
-  ]
+  ],
+
+  // Default Profile Picture (used when a profile pic is unavailable)
+  defaultProfilePicture: "https://files.catbox.moe/6c2p2w.jpg" // Replace with a real default image URL
 };
 
 module.exports = config;
