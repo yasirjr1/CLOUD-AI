@@ -26,6 +26,9 @@ const config = {
   ANTI_LEFT: process.env.ANTI_LEFT !== undefined ? process.env.ANTI_LEFT === 'true' : true, 
   ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
 
+  // Dynamic Anti-Left (Stores which groups have it enabled)
+  ANTI_LEFT_GROUPS: {},
+
   // Auto Bio with Juice WRLD Quotes
   AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
   BIO_QUOTES: [
