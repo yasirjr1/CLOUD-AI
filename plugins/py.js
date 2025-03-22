@@ -40,7 +40,7 @@ const play = async (_0x1b9510, _0xde7a32) => {
       const _0xapiMp3 = [
         `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`,
         `https://apis.davidcyriltech.my.id/download/ytmp3?url=${_0xac0071}`,
-        `https://apis.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${_0xac0071}&apikey=gifted-md`
+        `https://apis.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${_0xac0071}`,
       ];
 
       const _0xapiList = _0x5809fc.startsWith('video') ? _0xapiMp4 : _0xapiMp3;
