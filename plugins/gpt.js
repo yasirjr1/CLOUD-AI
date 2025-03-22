@@ -9,6 +9,12 @@ const gptStatusFile = path.resolve(__dirname, '../gpt_status.json');
 
 const deepSeekSystemPrompt = "You are an intelligent AI assistant.";
 
+// ✅ Function to check if sender is the bot owner
+async function isOwner(m, Matrix) {
+    const botUser = await Matrix.user.id; // Get bot's own ID
+    return m.sender === botUser; // Compare sender with bot's ID
+}
+
 // Function to read GPT status
 async function readGptStatus() {
     try {
@@ -71,16 +77,16 @@ const deepseek = async (m, Matrix) => {
     const gptStatus = await readGptStatus();
     const text = m.body.trim().toLowerCase();
 
-    // Toggle GPT On/Off
-    if (text === "gpt on") {
-        await writeGptStatus(true);
-        await Matrix.sendMessage(m.from, { text: "✅ GPT Mode has been *activated*." }, { quoted: m });
-        return;
-    }
+    // ✅ **Owner-Only GPT Toggle**
+    if (text === "gpt on" || text === "gpt off") {
+        if (!(await isOwner(m, Matrix))) {
+            await Matrix.sendMessage(m.from, { text: "❌ *Permission Denied!* Only the *bot owner* can toggle GPT mode." }, { quoted: m });
+            return;
+        }
 
-    if (text === "gpt off") {
-        await writeGptStatus(false);
-        await Matrix.sendMessage(m.from, { text: "❌ GPT Mode has been *deactivated*." }, { quoted: m });
+        const newStatus = text === "gpt on";
+        await writeGptStatus(newStatus);
+        await Matrix.sendMessage(m.from, { text: `✅ GPT Mode has been *${newStatus ? "activated" : "deactivated"}*.` }, { quoted: m });
         return;
     }
 
