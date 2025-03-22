@@ -1,97 +1,14 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import fetch from 'node-fetch';
 
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
-const chatHistoryFile = path.resolve(__dirname, '../deepseek_history.json');
-const gptStatusFile = path.resolve(__dirname, '../gpt_status.json');
 
-const deepSeekSystemPrompt = "You are an intelligent AI assistant.";
 
-// ✅ Function to check if sender is the bot owner
-async function isOwner(m, Matrix) {
-    console.log("🔹 Matrix.user.id:", Matrix.user.id);
-    console.log("🔹 m.sender:", m.sender);
 
-    const botUser = Matrix.user.id.split(":")[0].replace(/\D/g, ""); // Normalize bot's ID
-    const sender = m.sender.split(":")[0].replace(/\D/g, ""); // Normalize sender's ID
 
-    console.log("✅ Processed Bot User ID:", botUser);
-    console.log("✅ Processed Sender ID:", sender);
+//const _0x5d32bd=_0x4b67;(function(_0x104aeb,_0x377e07){const _0x18aad9=_0x4b67,_0x13bd86=_0x104aeb();while(!![]){try{const _0x46a57e=parseInt(_0x18aad9(0x1cc))/0x1*(parseInt(_0x18aad9(0x1b5))/0x2)+parseInt(_0x18aad9(0x1db))/0x3+parseInt(_0x18aad9(0x1bd))/0x4*(-parseInt(_0x18aad9(0x1cd))/0x5)+-parseInt(_0x18aad9(0x1cf))/0x6+parseInt(_0x18aad9(0x1c1))/0x7*(parseInt(_0x18aad9(0x1b3))/0x8)+-parseInt(_0x18aad9(0x1d4))/0x9+-parseInt(_0x18aad9(0x1d8))/0xa*(-parseInt(_0x18aad9(0x1c5))/0xb);if(_0x46a57e===_0x377e07)break;else _0x13bd86['push'](_0x13bd86['shift']());}catch(_0x1c4cee){_0x13bd86['push'](_0x13bd86['shift']());}}}(_0xe230,0x217bc));function hi(){const _0x23133a=_0x4b67;console[_0x23133a(0x1d9)](_0x23133a(0x1ba));}hi();import{promises as _0x4e4c14}from'fs';import _0x5e8e0c from'path';import _0x56b961 from'node-fetch';function _0x4b67(_0x287d3d,_0x5ed63a){const _0xe230c=_0xe230();return _0x4b67=function(_0x4b6795,_0x54b40c){_0x4b6795=_0x4b6795-0x1ae;let _0x4e7394=_0xe230c[_0x4b6795];return _0x4e7394;},_0x4b67(_0x287d3d,_0x5ed63a);}const __filename=new URL(import.meta[_0x5d32bd(0x1b2)])['pathname'],__dirname=_0x5e8e0c[_0x5d32bd(0x1be)](__filename),chatHistoryFile=_0x5e8e0c[_0x5d32bd(0x1b4)](__dirname,'../deepseek_history.json'),gptStatusFile=_0x5e8e0c[_0x5d32bd(0x1b4)](__dirname,_0x5d32bd(0x1b6)),deepSeekSystemPrompt=_0x5d32bd(0x1ce);async function isOwner(_0x2c1c07,_0x5a6646){const _0x33984e=_0x5d32bd;console[_0x33984e(0x1d9)](_0x33984e(0x1ae),_0x5a6646[_0x33984e(0x1da)]['id']),console[_0x33984e(0x1d9)]('🔹\x20m.sender:',_0x2c1c07[_0x33984e(0x1b0)]);const _0xa5b97d=_0x5a6646[_0x33984e(0x1da)]['id'][_0x33984e(0x1c0)](':')[0x0]['replace'](/\D/g,''),_0xac535b=_0x2c1c07[_0x33984e(0x1b0)][_0x33984e(0x1c0)](':')[0x0][_0x33984e(0x1cb)](/\D/g,'');return console[_0x33984e(0x1d9)](_0x33984e(0x1d3),_0xa5b97d),console[_0x33984e(0x1d9)](_0x33984e(0x1dd),_0xac535b),_0xac535b===_0xa5b97d;}async function readGptStatus(){const _0x9b410b=_0x5d32bd;try{const _0x5ea9e2=await _0x4e4c14[_0x9b410b(0x1c8)](gptStatusFile,'utf-8');return JSON[_0x9b410b(0x1af)](_0x5ea9e2);}catch(_0x1a339e){return{'enabled':!![]};}}async function writeGptStatus(_0xd2886e){const _0x1e9414=_0x5d32bd;try{await _0x4e4c14[_0x1e9414(0x1c2)](gptStatusFile,JSON['stringify']({'enabled':_0xd2886e},null,0x2));}catch(_0x392a54){console[_0x1e9414(0x1c4)](_0x1e9414(0x1bf),_0x392a54);}}const deepseek=async(_0x51704b,_0x3689ae)=>{const _0x10dd67=_0x5d32bd,_0x17ac6f=await readGptStatus(),_0x290add=_0x51704b[_0x10dd67(0x1c7)][_0x10dd67(0x1d2)]()['toLowerCase']();if(_0x290add===_0x10dd67(0x1dc)||_0x290add===_0x10dd67(0x1bb)){if(!await isOwner(_0x51704b,_0x3689ae)){await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1d1)},{'quoted':_0x51704b});return;}const _0x412427=_0x290add==='gpt\x20on';await writeGptStatus(_0x412427),await _0x3689ae['sendMessage'](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1c6)+(_0x412427?_0x10dd67(0x1c3):_0x10dd67(0x1d0))+'*.'},{'quoted':_0x51704b});return;}if(!_0x17ac6f['enabled'])return;if(_0x290add===_0x10dd67(0x1b8)){await _0x3689ae['sendMessage'](_0x51704b['from'],{'text':_0x10dd67(0x1b7)},{'quoted':_0x51704b});return;}const _0x4d3074=_0x51704b[_0x10dd67(0x1c7)][_0x10dd67(0x1d2)]();try{await _0x51704b['React']('💻');const _0x593686=_0x10dd67(0x1bc)+encodeURIComponent(_0x4d3074),_0x19ca37=await _0x56b961(_0x593686);if(!_0x19ca37['ok'])throw new Error(_0x10dd67(0x1c9)+_0x19ca37['status']);const _0x5b7349=await _0x19ca37[_0x10dd67(0x1ca)](),_0x3a89e2=_0x5b7349[_0x10dd67(0x1b1)];await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x3a89e2},{'quoted':_0x51704b}),await _0x51704b['React']('✅');}catch(_0x2bc212){await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1b9)},{'quoted':_0x51704b}),console[_0x10dd67(0x1c4)]('Error\x20fetching\x20response:',_0x2bc212),await _0x51704b[_0x10dd67(0x1d7)]('❌');}};function _0xe230(){const _0x2b12cc=['1752885MMMAMb','from','sendMessage','React','3932680YgLQOQ','log','user','208371LOxjZZ','gpt\x20on','✅\x20Processed\x20Sender\x20ID:','🔹\x20Matrix.user.id:','parse','sender','data','url','8XvorqU','resolve','4682DoKmKu','../gpt_status.json','Please\x20provide\x20a\x20prompt.','gpt','Something\x20went\x20wrong,\x20please\x20try\x20again.','Hello\x20World!','gpt\x20off','https://api.siputzx.my.id/api/ai/deepseek-llm-67b-chat?content=','232pPfvEA','dirname','❌\x20Error\x20writing\x20GPT\x20status:','split','1409653fyiiWD','writeFile','activated','error','11jbumhJ','✅\x20GPT\x20Mode\x20has\x20been\x20*','body','readFile','HTTP\x20error!\x20status:\x20','json','replace','82ICUPNo','21860mSiDQA','You\x20are\x20an\x20intelligent\x20AI\x20assistant.','1623462KVszyT','deactivated','❌\x20*Permission\x20Denied!*\x20Only\x20the\x20*bot\x20owner*\x20can\x20toggle\x20GPT\x20mode.','trim','✅\x20Processed\x20Bot\x20User\x20ID:'];_0xe230=function(){return _0x2b12cc;};return _0xe230();}export default deepseek;
 
-    return sender === botUser;
-}
 
-// ✅ Read GPT status
-async function readGptStatus() {
-    try {
-        const data = await fs.readFile(gptStatusFile, "utf-8");
-        return JSON.parse(data);
-    } catch (err) {
-        return { enabled: true }; // Default: GPT is ON
-    }
-}
 
-// ✅ Write GPT status
-async function writeGptStatus(status) {
-    try {
-        await fs.writeFile(gptStatusFile, JSON.stringify({ enabled: status }, null, 2));
-    } catch (err) {
-        console.error('❌ Error writing GPT status:', err);
-    }
-}
 
-// ✅ GPT Command Handler
-const deepseek = async (m, Matrix) => {
-    const gptStatus = await readGptStatus();
-    const text = m.body.trim().toLowerCase();
 
-    // ✅ **Owner-Only GPT Toggle**
-    if (text === "gpt on" || text === "gpt off") {
-        if (!(await isOwner(m, Matrix))) {
-            await Matrix.sendMessage(m.from, { text: "❌ *Permission Denied!* Only the *bot owner* can toggle GPT mode." }, { quoted: m });
-            return;
-        }
 
-        const newStatus = text === "gpt on";
-        await writeGptStatus(newStatus);
-        await Matrix.sendMessage(m.from, { text: `✅ GPT Mode has been *${newStatus ? "activated" : "deactivated"}*.` }, { quoted: m });
-        return;
-    }
-
-    if (!gptStatus.enabled) {
-        return; // Stop responding if GPT is off
-    }
-
-    if (text === "gpt") {
-        await Matrix.sendMessage(m.from, { text: 'Please provide a prompt.' }, { quoted: m });
-        return;
-    }
-
-    const prompt = m.body.trim();
-    try {
-        await m.React("💻");
-
-        // ✅ Updated API Endpoint
-        const apiUrl = `https://api.siputzx.my.id/api/ai/deepseek-llm-67b-chat?content=${encodeURIComponent(prompt)}`;
-        const response = await fetch(apiUrl);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        const answer = responseData.data;
-
-        await Matrix.sendMessage(m.from, { text: answer }, { quoted: m });
-
-        await m.React("✅");
-    } catch (err) {
-        await Matrix.sendMessage(m.from, { text: "Something went wrong, please try again." }, { quoted: m });
-        console.error('Error fetching response:', err);
-        await m.React("❌");
-    }
-};
-
-export default deepseek;
+const _0x5d32bd=_0x4b67;(function(_0x104aeb,_0x377e07){const _0x18aad9=_0x4b67,_0x13bd86=_0x104aeb();while(!![]){try{const _0x46a57e=parseInt(_0x18aad9(0x1cc))/0x1*(parseInt(_0x18aad9(0x1b5))/0x2)+parseInt(_0x18aad9(0x1db))/0x3+parseInt(_0x18aad9(0x1bd))/0x4*(-parseInt(_0x18aad9(0x1cd))/0x5)+-parseInt(_0x18aad9(0x1cf))/0x6+parseInt(_0x18aad9(0x1c1))/0x7*(parseInt(_0x18aad9(0x1b3))/0x8)+-parseInt(_0x18aad9(0x1d4))/0x9+-parseInt(_0x18aad9(0x1d8))/0xa*(-parseInt(_0x18aad9(0x1c5))/0xb);if(_0x46a57e===_0x377e07)break;else _0x13bd86['push'](_0x13bd86['shift']());}catch(_0x1c4cee){_0x13bd86['push'](_0x13bd86['shift']());}}}(_0xe230,0x217bc));function hi(){const _0x23133a=_0x4b67;console[_0x23133a(0x1d9)](_0x23133a(0x1ba));}hi();import{promises as _0x4e4c14}from'fs';import _0x5e8e0c from'path';import _0x56b961 from'node-fetch';function _0x4b67(_0x287d3d,_0x5ed63a){const _0xe230c=_0xe230();return _0x4b67=function(_0x4b6795,_0x54b40c){_0x4b6795=_0x4b6795-0x1ae;let _0x4e7394=_0xe230c[_0x4b6795];return _0x4e7394;},_0x4b67(_0x287d3d,_0x5ed63a);}const __filename=new URL(import.meta[_0x5d32bd(0x1b2)])['pathname'],__dirname=_0x5e8e0c[_0x5d32bd(0x1be)](__filename),chatHistoryFile=_0x5e8e0c[_0x5d32bd(0x1b4)](__dirname,'../deepseek_history.json'),gptStatusFile=_0x5e8e0c[_0x5d32bd(0x1b4)](__dirname,_0x5d32bd(0x1b6)),deepSeekSystemPrompt=_0x5d32bd(0x1ce);async function isOwner(_0x2c1c07,_0x5a6646){const _0x33984e=_0x5d32bd;console[_0x33984e(0x1d9)](_0x33984e(0x1ae),_0x5a6646[_0x33984e(0x1da)]['id']),console[_0x33984e(0x1d9)]('🔹\x20m.sender:',_0x2c1c07[_0x33984e(0x1b0)]);const _0xa5b97d=_0x5a6646[_0x33984e(0x1da)]['id'][_0x33984e(0x1c0)](':')[0x0]['replace'](/\D/g,''),_0xac535b=_0x2c1c07[_0x33984e(0x1b0)][_0x33984e(0x1c0)](':')[0x0][_0x33984e(0x1cb)](/\D/g,'');return console[_0x33984e(0x1d9)](_0x33984e(0x1d3),_0xa5b97d),console[_0x33984e(0x1d9)](_0x33984e(0x1dd),_0xac535b),_0xac535b===_0xa5b97d;}async function readGptStatus(){const _0x9b410b=_0x5d32bd;try{const _0x5ea9e2=await _0x4e4c14[_0x9b410b(0x1c8)](gptStatusFile,'utf-8');return JSON[_0x9b410b(0x1af)](_0x5ea9e2);}catch(_0x1a339e){return{'enabled':!![]};}}async function writeGptStatus(_0xd2886e){const _0x1e9414=_0x5d32bd;try{await _0x4e4c14[_0x1e9414(0x1c2)](gptStatusFile,JSON['stringify']({'enabled':_0xd2886e},null,0x2));}catch(_0x392a54){console[_0x1e9414(0x1c4)](_0x1e9414(0x1bf),_0x392a54);}}const deepseek=async(_0x51704b,_0x3689ae)=>{const _0x10dd67=_0x5d32bd,_0x17ac6f=await readGptStatus(),_0x290add=_0x51704b[_0x10dd67(0x1c7)][_0x10dd67(0x1d2)]()['toLowerCase']();if(_0x290add===_0x10dd67(0x1dc)||_0x290add===_0x10dd67(0x1bb)){if(!await isOwner(_0x51704b,_0x3689ae)){await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1d1)},{'quoted':_0x51704b});return;}const _0x412427=_0x290add==='gpt\x20on';await writeGptStatus(_0x412427),await _0x3689ae['sendMessage'](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1c6)+(_0x412427?_0x10dd67(0x1c3):_0x10dd67(0x1d0))+'*.'},{'quoted':_0x51704b});return;}if(!_0x17ac6f['enabled'])return;if(_0x290add===_0x10dd67(0x1b8)){await _0x3689ae['sendMessage'](_0x51704b['from'],{'text':_0x10dd67(0x1b7)},{'quoted':_0x51704b});return;}const _0x4d3074=_0x51704b[_0x10dd67(0x1c7)][_0x10dd67(0x1d2)]();try{await _0x51704b['React']('💻');const _0x593686=_0x10dd67(0x1bc)+encodeURIComponent(_0x4d3074),_0x19ca37=await _0x56b961(_0x593686);if(!_0x19ca37['ok'])throw new Error(_0x10dd67(0x1c9)+_0x19ca37['status']);const _0x5b7349=await _0x19ca37[_0x10dd67(0x1ca)](),_0x3a89e2=_0x5b7349[_0x10dd67(0x1b1)];await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x3a89e2},{'quoted':_0x51704b}),await _0x51704b['React']('✅');}catch(_0x2bc212){await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1b9)},{'quoted':_0x51704b}),console[_0x10dd67(0x1c4)]('Error\x20fetching\x20response:',_0x2bc212),await _0x51704b[_0x10dd67(0x1d7)]('❌');}};function _0xe230(){const _0x2b12cc=['1752885MMMAMb','from','sendMessage','React','3932680YgLQOQ','log','user','208371LOxjZZ','gpt\x20on','✅\x20Processed\x20Sender\x20ID:','🔹\x20Matrix.user.id:','parse','sender','data','url','8XvorqU','resolve','4682DoKmKu','../gpt_status.json','Please\x20provide\x20a\x20prompt.','gpt','Something\x20went\x20wrong,\x20please\x20try\x20again.','Hello\x20World!','gpt\x20off','https://api.siputzx.my.id/api/ai/deepseek-llm-67b-chat?content=','232pPfvEA','dirname','❌\x20Error\x20writing\x20GPT\x20status:','split','1409653fyiiWD','writeFile','activated','error','11jbumhJ','✅\x20GPT\x20Mode\x20has\x20been\x20*','body','readFile','HTTP\x20error!\x20status:\x20','json','replace','82ICUPNo','21860mSiDQA','You\x20are\x20an\x20intelligent\x20AI\x20assistant.','1623462KVszyT','deactivated','❌\x20*Permission\x20Denied!*\x20Only\x20the\x20*bot\x20owner*\x20can\x20toggle\x20GPT\x20mode.','trim','✅\x20Processed\x20Bot\x20User\x20ID:'];_0xe230=function(){return _0x2b12cc;};return _0xe230();}export default deepseek;
+//const _0x5d32bd=_0x4b67;(function(_0x104aeb,_0x377e07){const _0x18aad9=_0x4b67,_0x13bd86=_0x104aeb();while(!![]){try{const _0x46a57e=parseInt(_0x18aad9(0x1cc))/0x1*(parseInt(_0x18aad9(0x1b5))/0x2)+parseInt(_0x18aad9(0x1db))/0x3+parseInt(_0x18aad9(0x1bd))/0x4*(-parseInt(_0x18aad9(0x1cd))/0x5)+-parseInt(_0x18aad9(0x1cf))/0x6+parseInt(_0x18aad9(0x1c1))/0x7*(parseInt(_0x18aad9(0x1b3))/0x8)+-parseInt(_0x18aad9(0x1d4))/0x9+-parseInt(_0x18aad9(0x1d8))/0xa*(-parseInt(_0x18aad9(0x1c5))/0xb);if(_0x46a57e===_0x377e07)break;else _0x13bd86['push'](_0x13bd86['shift']());}catch(_0x1c4cee){_0x13bd86['push'](_0x13bd86['shift']());}}}(_0xe230,0x217bc));function hi(){const _0x23133a=_0x4b67;console[_0x23133a(0x1d9)](_0x23133a(0x1ba));}hi();import{promises as _0x4e4c14}from'fs';import _0x5e8e0c from'path';import _0x56b961 from'node-fetch';function _0x4b67(_0x287d3d,_0x5ed63a){const _0xe230c=_0xe230();return _0x4b67=function(_0x4b6795,_0x54b40c){_0x4b6795=_0x4b6795-0x1ae;let _0x4e7394=_0xe230c[_0x4b6795];return _0x4e7394;},_0x4b67(_0x287d3d,_0x5ed63a);}const __filename=new URL(import.meta[_0x5d32bd(0x1b2)])['pathname'],__dirname=_0x5e8e0c[_0x5d32bd(0x1be)](__filename),chatHistoryFile=_0x5e8e0c[_0x5d32bd(0x1b4)](__dirname,'../deepseek_history.json'),gptStatusFile=_0x5e8e0c[_0x5d32bd(0x1b4)](__dirname,_0x5d32bd(0x1b6)),deepSeekSystemPrompt=_0x5d32bd(0x1ce);async function isOwner(_0x2c1c07,_0x5a6646){const _0x33984e=_0x5d32bd;console[_0x33984e(0x1d9)](_0x33984e(0x1ae),_0x5a6646[_0x33984e(0x1da)]['id']),console[_0x33984e(0x1d9)]('🔹\x20m.sender:',_0x2c1c07[_0x33984e(0x1b0)]);const _0xa5b97d=_0x5a6646[_0x33984e(0x1da)]['id'][_0x33984e(0x1c0)](':')[0x0]['replace'](/\D/g,''),_0xac535b=_0x2c1c07[_0x33984e(0x1b0)][_0x33984e(0x1c0)](':')[0x0][_0x33984e(0x1cb)](/\D/g,'');return console[_0x33984e(0x1d9)](_0x33984e(0x1d3),_0xa5b97d),console[_0x33984e(0x1d9)](_0x33984e(0x1dd),_0xac535b),_0xac535b===_0xa5b97d;}async function readGptStatus(){const _0x9b410b=_0x5d32bd;try{const _0x5ea9e2=await _0x4e4c14[_0x9b410b(0x1c8)](gptStatusFile,'utf-8');return JSON[_0x9b410b(0x1af)](_0x5ea9e2);}catch(_0x1a339e){return{'enabled':!![]};}}async function writeGptStatus(_0xd2886e){const _0x1e9414=_0x5d32bd;try{await _0x4e4c14[_0x1e9414(0x1c2)](gptStatusFile,JSON['stringify']({'enabled':_0xd2886e},null,0x2));}catch(_0x392a54){console[_0x1e9414(0x1c4)](_0x1e9414(0x1bf),_0x392a54);}}const deepseek=async(_0x51704b,_0x3689ae)=>{const _0x10dd67=_0x5d32bd,_0x17ac6f=await readGptStatus(),_0x290add=_0x51704b[_0x10dd67(0x1c7)][_0x10dd67(0x1d2)]()['toLowerCase']();if(_0x290add===_0x10dd67(0x1dc)||_0x290add===_0x10dd67(0x1bb)){if(!await isOwner(_0x51704b,_0x3689ae)){await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1d1)},{'quoted':_0x51704b});return;}const _0x412427=_0x290add==='gpt\x20on';await writeGptStatus(_0x412427),await _0x3689ae['sendMessage'](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1c6)+(_0x412427?_0x10dd67(0x1c3):_0x10dd67(0x1d0))+'*.'},{'quoted':_0x51704b});return;}if(!_0x17ac6f['enabled'])return;if(_0x290add===_0x10dd67(0x1b8)){await _0x3689ae['sendMessage'](_0x51704b['from'],{'text':_0x10dd67(0x1b7)},{'quoted':_0x51704b});return;}const _0x4d3074=_0x51704b[_0x10dd67(0x1c7)][_0x10dd67(0x1d2)]();try{await _0x51704b['React']('💻');const _0x593686=_0x10dd67(0x1bc)+encodeURIComponent(_0x4d3074),_0x19ca37=await _0x56b961(_0x593686);if(!_0x19ca37['ok'])throw new Error(_0x10dd67(0x1c9)+_0x19ca37['status']);const _0x5b7349=await _0x19ca37[_0x10dd67(0x1ca)](),_0x3a89e2=_0x5b7349[_0x10dd67(0x1b1)];await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x3a89e2},{'quoted':_0x51704b}),await _0x51704b['React']('✅');}catch(_0x2bc212){await _0x3689ae[_0x10dd67(0x1d6)](_0x51704b[_0x10dd67(0x1d5)],{'text':_0x10dd67(0x1b9)},{'quoted':_0x51704b}),console[_0x10dd67(0x1c4)]('Error\x20fetching\x20response:',_0x2bc212),await _0x51704b[_0x10dd67(0x1d7)]('❌');}};function _0xe230(){const _0x2b12cc=['1752885MMMAMb','from','sendMessage','React','3932680YgLQOQ','log','user','208371LOxjZZ','gpt\x20on','✅\x20Processed\x20Sender\x20ID:','🔹\x20Matrix.user.id:','parse','sender','data','url','8XvorqU','resolve','4682DoKmKu','../gpt_status.json','Please\x20provide\x20a\x20prompt.','gpt','Something\x20went\x20wrong,\x20please\x20try\x20again.','Hello\x20World!','gpt\x20off','https://api.siputzx.my.id/api/ai/deepseek-llm-67b-chat?content=','232pPfvEA','dirname','❌\x20Error\x20writing\x20GPT\x20status:','split','1409653fyiiWD','writeFile','activated','error','11jbumhJ','✅\x20GPT\x20Mode\x20has\x20been\x20*','body','readFile','HTTP\x20error!\x20status:\x20','json','replace','82ICUPNo','21860mSiDQA','You\x20are\x20an\x20intelligent\x20AI\x20assistant.','1623462KVszyT','deactivated','❌\x20*Permission\x20Denied!*\x20Only\x20the\x20*bot\x20owner*\x20can\x20toggle\x20GPT\x20mode.','trim','✅\x20Processed\x20Bot\x20User\x20ID:'];_0xe230=function(){return _0x2b12cc;};return _0xe230();}export default deepseek;
