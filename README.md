@@ -1,7 +1,7 @@
-# 🌟 NON PREFIX XMD 🌟  
+# 🌟 CLOUD ☁️ AI 🌟  
 
 <p align="center">
-  <img src="https://files.catbox.moe/1pwu4e.jpg" width="500"/>
+  <img src="https://files.catbox.moe/6c2p2w.jpg" width="500"/>
 </p>
 
 ---
@@ -37,7 +37,7 @@ do not start with a prefix for example
 🔥 Click the button below to fork this repo. Don't forget to ⭐ star this repository if you find it useful!  
 
 <p align="center">
-  <a href="https://github.com/DEVELOPER-BERA/NON-PREFIX-XMD/fork" target="_blank">
+  <a href="https://github.com/DEVELOPER-BERA/CLOUD-AI/fork" target="_blank">
     <img alt="Fork Repo" src="https://img.shields.io/badge/FORK REPO-🔥 CLICK HERE 🔥-blue?style=for-the-badge&logo=github&logoColor=white&labelColor=black"/>
   </a>
 </p>
@@ -49,7 +49,7 @@ do not start with a prefix for example
 ✨ Generate your **secure session ID** by clicking the button below:  
 
 <p align="center">
-  <a href="https://bera-tech-server.vercel.app" target="_blank">
+  <a href="https://projext-session-server-a9643bc1be6b.herokuapp.com/" target="_blank">
     <img alt="Pair Code" src="https://img.shields.io/badge/PAIR CODE-⚡ GET CODE NOW ⚡-gold?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=black"/>
   </a>
 </p>
@@ -58,10 +58,10 @@ do not start with a prefix for example
 
 ## 🚀 Deploy on Heroku  
 
-💜 Deploy **NON PREFIX XMD** on **Heroku** with one click:  
+💜 Deploy **CLOUD-AI** on **Heroku** with one click:  
 
 <p align="center">
-  <a href="https://dashboard.heroku.com/new?template=https%3A%2F%2Fgithub.com%2FDEVELOPER-BERA%2FNON-PREFIX-XMD%2F" target="_blank">
+  <a href="https://bera-tech-server.vercel.app" target="_blank">
     <img alt="Deploy on Heroku" src="https://img.shields.io/badge/HEROKU-🚀 DEPLOY NOW 🚀-indigo?style=for-the-badge&logo=heroku&logoColor=white&labelColor=black"/>
   </a>
 </p>
