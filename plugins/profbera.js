@@ -1,11 +1,10 @@
-const config = require("./config.cjs");
+import config from "./config.cjs";
 
-module.exports = async (context) => {
+export default async function profile(context) {
     const { client, m } = context;
 
     const command = m.text.trim().split(/\s+/)[0].toLowerCase();
-
-    if (command !== "profile1") return;
+    if (command !== "profile") return;
 
     const target = m.quoted ? m.quoted.sender : m.sender;
     const name = m.quoted ? "@" + target.split("@")[0] : m.pushName;
@@ -33,4 +32,4 @@ module.exports = async (context) => {
     };
 
     await client.sendMessage(m.chat, message, { quoted: m });
-};
+}
