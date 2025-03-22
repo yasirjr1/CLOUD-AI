@@ -1,39 +1,103 @@
+import { promises as fs } from 'fs';
+import path from 'path';
 import fetch from 'node-fetch';
-import config from '../../config.cjs';
 
-const gpt = async (message, client) => {
-  const text = message.body.trim().toLowerCase();
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+const chatHistoryFile = path.resolve(__dirname, '../deepseek_history.json');
 
-  if (!text.startsWith('gpt')) return;
-  
-  const query = text.replace(/^gpt\s*/, "").trim();
-  if (!query) return message.reply("❌ *Please provide a prompt!*");
+const deepSeekSystemPrompt = "You are an intelligent AI assistant.";
 
-  await message.React('⏳');
-
-  const gptAPIs = [
-    `https://api.dreaded.site/api/chatgpt?text=${encodeURIComponent(query)}`,
-    `https://someotherfreeapi.com/chat?query=${encodeURIComponent(query)}`,
-    `https://anotherbackupapi.com/ask?prompt=${encodeURIComponent(query)}`
-  ];
-
-  let responseText = "❌ *Failed to fetch response, try again!*";
-
-  for (const apiUrl of gptAPIs) {
+async function readChatHistoryFromFile() {
     try {
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-
-      if (data && data.response) {
-        responseText = data.response;
-        break; // Stop trying once a valid response is received
-      }
-    } catch (error) {
-      console.error("API Error:", error);
+        const data = await fs.readFile(chatHistoryFile, "utf-8");
+        return JSON.parse(data);
+    } catch (err) {
+        return {};
     }
-  }
+}
 
-  await client.sendMessage(message.from, { text: `🤖 *AI Response:*\n\n${responseText}` }, { quoted: message });
+async function writeChatHistoryToFile(chatHistory) {
+    try {
+        await fs.writeFile(chatHistoryFile, JSON.stringify(chatHistory, null, 2));
+    } catch (err) {
+        console.error('Error writing chat history to file:', err);
+    }
+}
+
+async function updateChatHistory(chatHistory, sender, message) {
+    if (!chatHistory[sender]) {
+        chatHistory[sender] = [];
+    }
+    chatHistory[sender].push(message);
+    if (chatHistory[sender].length > 20) {
+        chatHistory[sender].shift();
+    }
+    await writeChatHistoryToFile(chatHistory);
+}
+
+async function deleteChatHistory(chatHistory, userId) {
+    delete chatHistory[userId];
+    await writeChatHistoryToFile(chatHistory);
+}
+
+const deepseek = async (m, Matrix) => {
+    const chatHistory = await readChatHistoryFromFile();
+    const text = m.body.trim().toLowerCase();
+
+    if (text === "gpt") {
+        await Matrix.sendMessage(m.from, { text: 'Please provide a prompt.' }, { quoted: m });
+        return;
+    }
+
+    if (text === "/forget") {
+        await deleteChatHistory(chatHistory, m.sender);
+        await Matrix.sendMessage(m.from, { text: 'Conversation deleted successfully' }, { quoted: m });
+        return;
+    }
+
+    const prompt = m.body.trim();
+
+    try {
+        const senderChatHistory = chatHistory[m.sender] || [];
+        const messages = [
+            { role: "system", content: deepSeekSystemPrompt },
+            ...senderChatHistory,
+            { role: "user", content: prompt }
+        ];
+
+        await m.React("💻");
+
+        // ✅ Updated API Endpoint
+        const apiUrl = `https://api.siputzx.my.id/api/ai/deepseek-llm-67b-chat?content=${encodeURIComponent(prompt)}`;
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        const answer = responseData.data;
+
+        await updateChatHistory(chatHistory, m.sender, { role: "user", content: prompt });
+        await updateChatHistory(chatHistory, m.sender, { role: "assistant", content: answer });
+
+        const codeMatch = answer.match(/```([\s\S]*?)```/);
+
+        if (codeMatch) {
+            const code = codeMatch[1];
+
+            await Matrix.sendMessage(m.from, { text: `🔹 *Here's your code snippet:* \n\n\`\`\`${code}\`\`\`` }, { quoted: m });
+        } else {
+            await Matrix.sendMessage(m.from, { text: answer }, { quoted: m });
+        }
+
+        await m.React("✅");
+    } catch (err) {
+        await Matrix.sendMessage(m.from, { text: "Something went wrong, please try again." }, { quoted: m });
+        console.error('Error fetching response from DeepSeek API:', err);
+        await m.React("❌");
+    }
 };
 
-export default gpt;
+export default deepseek;
