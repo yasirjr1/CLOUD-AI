@@ -1,35 +1,82 @@
-import config from "./config.cjs";
+import axios from "axios";
+import config from "../../config.cjs";
 
-export default async function profile(context) {
-    const { client, m } = context;
+const shortenUrl = async (m, sock) => {
+  const cmd = m.body.trim().split(" ")[0].toLowerCase();
 
-    const command = m.text.trim().split(/\s+/)[0].toLowerCase();
-    if (command !== "profile") return;
+  const validCommands = ["shortenurl", "urlshortener", "shorten"];
+  if (!validCommands.includes(cmd)) return;
 
-    const target = m.quoted ? m.quoted.sender : m.sender;
-    const name = m.quoted ? "@" + target.split("@")[0] : m.pushName;
+  const url = m.body.split(" ")[1];
 
-    let ppUrl = config.defaultProfilePicture;
-    let statusMessage = "About not accessible due to user privacy settings.";
+  if (!url) {
+    return await sock.sendMessage(
+      m.from,
+      { text: "❌ Please provide a URL to shorten. Example: *shortenurl https://github.com/DEVELOPER-BERA/CLOUD-AI*" },
+      { quoted: m }
+    );
+  }
 
-    try {
-        ppUrl = await client.profilePictureUrl(target, "image");
-    } catch (err) {
-        console.error("Error fetching profile picture:", err.message);
+  const apiUrl = `https://bk9.fun/tools/shorten?url=${encodeURIComponent(url)}`;
+
+  try {
+    await m.React("⏳"); // React with a loading icon
+
+    const response = await axios.get(apiUrl);
+    const data = response.data;
+
+    if (data.status === true && data.BK9) {
+      const originalUrl = data.BK9.origin;
+      const shortenedUrl = data.BK9.url;
+
+      const responseText = `🔗 *URL Shortened*\n\n🌐 Original URL: *${originalUrl}*\n➡️ Shortened URL: *${shortenedUrl}*\n\n💡 _Tap and hold on the shortened URL to copy it._\n\nRegards, Bruce Bera`;
+
+      await sock.sendMessage(
+        m.from,
+        {
+          text: responseText,
+          contextInfo: {
+            isForwarded: false,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: "@newsletter",
+              newsletterName: "",
+              serverMessageId: -1,
+            },
+            forwardingScore: 999, // Score to indicate it has been forwarded
+            externalAdReply: {
+              title: "Regards, Bruce Bera",
+              body: "URL Shortener Service",
+              thumbnailUrl: "", // Add thumbnail URL if required
+              sourceUrl: "", // Source URL
+              mediaType: 1,
+              renderLargerThumbnail: false,
+            },
+          },
+        },
+        { quoted: m }
+      );
+    } else {
+      throw new Error("Invalid response from the API");
     }
+  } catch (error) {
+    console.error("Error:", error); // Log the full error for debugging
 
-    try {
-        const status = await client.fetchStatus(target);
-        statusMessage = status.status || statusMessage;
-    } catch (err) {
-        console.error("Error fetching status:", err.message);
-    }
+    await sock.sendMessage(
+      m.from,
+      {
+        text: `❌ Error shortening URL: ${error.message}`,
+        contextInfo: {
+          externalAdReply: {
+            title: "Regards, Bruce Bera",
+            body: "URL Shortener Service",
+            sourceUrl: "",
+            mediaType: 1,
+          },
+        },
+      },
+      { quoted: m }
+    );
+  }
+};
 
-    const message = {
-        image: { url: ppUrl },
-        caption: `*Name:* ${name}\n*About:*\n${statusMessage}`,
-        mentions: m.quoted ? [m.quoted.sender] : []
-    };
-
-    await client.sendMessage(m.chat, message, { quoted: m });
-}
+export default shortenUrl;
