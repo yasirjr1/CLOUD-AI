@@ -42,13 +42,7 @@ const config = {
 //-------//
 
     }
-  // 🔧 Commands Configuration
-  commands: {
-    devContacts: {
-      enabled: true, // Toggleable option
-      path: './plugins/devcontact.js',
-      noPrefix: true // Ensures it works without a prefix
-    }
+
   }
 };
 
