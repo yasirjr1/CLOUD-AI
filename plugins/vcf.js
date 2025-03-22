@@ -11,7 +11,7 @@ const vcfCompiler = async (m, gss) => {
       return m.reply("*📛 THIS COMMAND CAN ONLY BE USED IN GROUPS!*\n\n*Regards, Bruce Bera.*");
     }
 
-    m.reply("*⏳ NON-PREFIX-XMD is compiling your contacts, please wait...*");
+    m.reply("*⏳ Cloud Ai is compiling your contacts, please wait...*");
 
     const groupMetadata = await gss.groupMetadata(m.from);
     const participants = groupMetadata.participants;
