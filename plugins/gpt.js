@@ -5,9 +5,30 @@ import fetch from 'node-fetch';
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 const chatHistoryFile = path.resolve(__dirname, '../deepseek_history.json');
+const gptStatusFile = path.resolve(__dirname, '../gpt_status.json');
 
 const deepSeekSystemPrompt = "You are an intelligent AI assistant.";
 
+// Function to read GPT status
+async function readGptStatus() {
+    try {
+        const data = await fs.readFile(gptStatusFile, "utf-8");
+        return JSON.parse(data);
+    } catch (err) {
+        return { enabled: true }; // Default: GPT is ON
+    }
+}
+
+// Function to write GPT status
+async function writeGptStatus(status) {
+    try {
+        await fs.writeFile(gptStatusFile, JSON.stringify({ enabled: status }, null, 2));
+    } catch (err) {
+        console.error('Error writing GPT status to file:', err);
+    }
+}
+
+// Function to read chat history
 async function readChatHistoryFromFile() {
     try {
         const data = await fs.readFile(chatHistoryFile, "utf-8");
@@ -17,6 +38,7 @@ async function readChatHistoryFromFile() {
     }
 }
 
+// Function to write chat history
 async function writeChatHistoryToFile(chatHistory) {
     try {
         await fs.writeFile(chatHistoryFile, JSON.stringify(chatHistory, null, 2));
@@ -25,6 +47,7 @@ async function writeChatHistoryToFile(chatHistory) {
     }
 }
 
+// Function to update chat history
 async function updateChatHistory(chatHistory, sender, message) {
     if (!chatHistory[sender]) {
         chatHistory[sender] = [];
@@ -36,14 +59,34 @@ async function updateChatHistory(chatHistory, sender, message) {
     await writeChatHistoryToFile(chatHistory);
 }
 
+// Function to delete chat history
 async function deleteChatHistory(chatHistory, userId) {
     delete chatHistory[userId];
     await writeChatHistoryToFile(chatHistory);
 }
 
+// GPT Command Handler
 const deepseek = async (m, Matrix) => {
     const chatHistory = await readChatHistoryFromFile();
+    const gptStatus = await readGptStatus();
     const text = m.body.trim().toLowerCase();
+
+    // Toggle GPT On/Off
+    if (text === "gpt on") {
+        await writeGptStatus(true);
+        await Matrix.sendMessage(m.from, { text: "✅ GPT Mode has been *activated*." }, { quoted: m });
+        return;
+    }
+
+    if (text === "gpt off") {
+        await writeGptStatus(false);
+        await Matrix.sendMessage(m.from, { text: "❌ GPT Mode has been *deactivated*." }, { quoted: m });
+        return;
+    }
+
+    if (!gptStatus.enabled) {
+        return; // Stop responding if GPT is off
+    }
 
     if (text === "gpt") {
         await Matrix.sendMessage(m.from, { text: 'Please provide a prompt.' }, { quoted: m });
