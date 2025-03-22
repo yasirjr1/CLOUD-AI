@@ -1,9 +1,9 @@
 {
   "name": "BERA TECH",
   "description": "I am BERA TECH WhatsApp MultiDevice Bot built in NodeJs to enhance the experience.",
-  "logo": "https://files.catbox.moe/waszph.jpg",
+  "logo": "https://files.catbox.moe/6c2p2w.jpg",
   "keywords": ["BERA-TECH", "whatsapp-bot", "whatsapp-md-bot"],
-  "repository": "https://github.com/DEVELOPER-BERA/NON-PREFIX-XMD",
+  "repository": "https://github.com/DEVELOPER-BERA/CLOUD-AI",
   "stack": "container",
   "env": { 
     "SESSION_ID": {
