@@ -1,40 +1,44 @@
-import config from '../config.cjs';
+import config from "../../config.cjs";
 
-const antiLeft = {
-    enabled: true, // Default: ON
+const antiLeft = async (m, sock) => {
+    const command = m.body.trim().toLowerCase();
+
+    if (!["antileft on", "antileft off"].includes(command)) return;
+
+    const groupId = m.key.remoteJid;
+    const sender = m.key.participant || m.key.remoteJid;
+    
+    // Ensure only the bot owner can toggle this feature
+    if (!config.OWNERS.includes(sender)) {
+        return await sock.sendMessage(m.from, { text: "❌ *Only the bot owner can use this command!*" }, { quoted: m });
+    }
+
+    // Store the anti-left setting dynamically (You might want to save it in a database for persistence)
+    if (!global.antiLeft) global.antiLeft = {};
+    
+    if (command === "antileft on") {
+        global.antiLeft[groupId] = true;
+        await sock.sendMessage(m.from, { text: "✅ *Anti-Left is now enabled!*" }, { quoted: m });
+    } else if (command === "antileft off") {
+        global.antiLeft[groupId] = false;
+        await sock.sendMessage(m.from, { text: "❌ *Anti-Left is now disabled!*" }, { quoted: m });
+    }
 };
 
-export const toggleAntiLeft = async (m, Matrix) => {
-    const botOwner = config.OWNER_NUMBER + "@s.whatsapp.net"; // Ensure OWNER_NUMBER is in config.cjs
+// Event listener for participants leaving
+const onGroupParticipantsUpdate = async (update, sock) => {
+    const { id, participants, action } = update;
 
-    if (m.sender !== botOwner) {
-        return m.reply("⚠️ *You are not authorized to use this command!*");
-    }
-
-    const text = m.body.toLowerCase().trim();
-
-    if (text === "antileft on") {
-        antiLeft.enabled = true;
-        return m.reply("✅ *Anti-Left is now enabled!* Members cannot leave this group.");
-    }
-
-    if (text === "antileft off") {
-        antiLeft.enabled = false;
-        return m.reply("🚫 *Anti-Left is now disabled!* Members can leave freely.");
-    }
-};
-
-// Function to re-add members when they leave
-export const handleGroupUpdate = async (Matrix, update) => {
-    if (!antiLeft.enabled) return; // Stop if feature is off
-
-    if (update.action === "remove") {
-        const userJid = update.participants[0];
-        try {
-            await Matrix.groupParticipantsUpdate(update.id, [userJid], "add");
-            await Matrix.sendMessage(update.id, { text: `❌ *Leaving is not allowed!* @${userJid.split("@")[0]}, you've been re-added!` }, { mentions: [userJid] });
-        } catch (err) {
-            console.error("Error re-adding user:", err);
+    if (action === "remove" && global.antiLeft?.[id]) {
+        for (const user of participants) {
+            try {
+                await sock.groupParticipantsUpdate(id, [user], "add");
+                await sock.sendMessage(id, { text: `🚫 *You cannot leave this group!*` });
+            } catch (error) {
+                console.error("Error re-adding user:", error);
+            }
         }
     }
 };
+
+export { antiLeft, onGroupParticipantsUpdate };
