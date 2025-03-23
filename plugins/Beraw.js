@@ -2,6 +2,7 @@ import { writeFile, readFile } from 'fs/promises';
 
 const welcomeFile = './bera.json';
 
+// Read welcome settings
 const readWelcomeStatus = async () => {
     try {
         const data = await readFile(welcomeFile, 'utf8');
@@ -11,6 +12,7 @@ const readWelcomeStatus = async () => {
     }
 };
 
+// Write welcome settings
 const writeWelcomeStatus = async (status) => {
     await writeFile(welcomeFile, JSON.stringify(status, null, 2));
 };
@@ -19,7 +21,7 @@ const welcome = async (m, Matrix) => {
     const chatId = m.from;
     const senderId = m.sender;
     const isGroup = m.isGroup;
-    const text = m.body?.trim().toLowerCase();
+    const text = m.body?.trim()?.toLowerCase();
 
     if (!isGroup) return;
 
@@ -44,11 +46,11 @@ const welcome = async (m, Matrix) => {
         return;
     }
 
-    // ✅ Handle New Participant Join Event
-    if (m.update?.participants && m.update.action === "add") {
+    // ✅ Handle New Member Joining
+    if (m.type === "group-participants-update" && m.action === "add") {
         if (!welcomeStatus[chatId]) return;
 
-        const userJid = m.update.participants[0];
+        const userJid = m.participants[0];
         const userProfilePic = await Matrix.profilePictureUrl(userJid, 'image').catch(() => "https://i.imgur.com/6Q0qLAE.jpg");
 
         const welcomeMessage = `🌟 *Welcome to the group!* 🌟\n\n👤 *User:* @${userJid.split('@')[0]}\n📌 *Enjoy your stay and follow the rules!*\n\n*Regards, Bera Tech*`;
