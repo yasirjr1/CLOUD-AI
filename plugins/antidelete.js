@@ -1,50 +1,28 @@
 import { writeFile, readFile } from "fs/promises";
 
-const antiDeleteFile = "./antidelete.json";
+// Store deleted messages
+const deletedMessages = new Map();
 
-// ✅ Read Anti-Delete Status
-const readAntiDeleteStatus = async () => {
-    try {
-        const data = await readFile(antiDeleteFile, "utf8");
-        return JSON.parse(data);
-    } catch {
-        return {};
-    }
-};
-
-// ✅ Write Anti-Delete Status
-const writeAntiDeleteStatus = async (status) => {
-    await writeFile(antiDeleteFile, JSON.stringify(status, null, 2));
-};
-
+// Anti-Delete Function (Always ON)
 const antidelete = async (m, Matrix) => {
     const chatId = m.from;
-    const isGroup = m.isGroup;
 
-    let antiDeleteStatus = await readAntiDeleteStatus();
-
-    // ✅ Allow Any User to Toggle
-    if (m.body.toLowerCase() === "antidelete on" || m.body.toLowerCase() === "antidelete off") {
-        antiDeleteStatus[chatId] = m.body.toLowerCase() === "antidelete on";
-        await writeAntiDeleteStatus(antiDeleteStatus);
-
-        await Matrix.sendMessage(chatId, { 
-            text: `✅ *Anti-Delete has been ${m.body.toLowerCase() === "antidelete on" ? "enabled" : "disabled"} in this chat.*`
-        }, { quoted: m });
-        return;
+    // ✅ Store messages before they get deleted
+    if (!m.isDeleted) {
+        deletedMessages.set(m.id, { text: m.body, sender: m.sender, timestamp: m.timestamp });
     }
 
-    // ✅ Detect Deleted Messages and Recover
-    if (m.type === "message-revoke") {
-        if (!antiDeleteStatus[chatId]) return; // Ignore if Anti-Delete is off
+    // ✅ Detect deleted messages and repost
+    if (m.isDeleted) {
+        const deletedMsg = deletedMessages.get(m.id);
+        if (!deletedMsg) return;
 
-        const originalMessage = m.message; // The deleted message
-        const userJid = m.participant; // Who deleted the message
+        await Matrix.sendMessage(chatId, {
+            text: `🚨 *Anti-Delete Active! A message was deleted!*\n\n👤 *Sender:* @${deletedMsg.sender.split('@')[0]}\n🕒 *Time:* ${new Date(deletedMsg.timestamp * 1000).toLocaleString()}\n📝 *Message:* \n\n${deletedMsg.text}`,
+            mentions: [deletedMsg.sender]
+        });
 
-        const recoveryMessage = `🚨 *Anti-Delete Active!* 🚨\n\n👤 *User:* @${userJid.split("@")[0]}\n🗑️ *Tried to delete a message!*\n\n📩 *Message Content:*`;
-
-        await Matrix.sendMessage(chatId, { text: recoveryMessage, mentions: [userJid] });
-        await Matrix.sendMessage(chatId, originalMessage, { quoted: m }); // Re-send deleted message
+        deletedMessages.delete(m.id);
     }
 };
 
