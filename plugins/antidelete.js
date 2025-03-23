@@ -1,36 +1,51 @@
-export const antidelete = async (Matrix, message) => {
+import { writeFile, readFile } from "fs/promises";
+
+const antiDeleteFile = "./antidelete.json";
+
+// ✅ Read Anti-Delete Status
+const readAntiDeleteStatus = async () => {
     try {
-        const { messages } = message;
-        if (!messages || !messages[0]?.messageStubType) return;
-
-        const msg = messages[0];
-        if (msg.messageStubType !== 68) return; // Only detect deleted messages (Type 68)
-
-        const chatId = msg.key.remoteJid; // Keeps the recovered message in the same chat
-        const sender = msg.key.participant || msg.key.remoteJid;
-        const messageType = Object.keys(msg.message || {})[0];
-
-        let recoveredMessage = "📩 *Deleted Message Recovered:*\n";
-        recoveredMessage += `\n👤 *From:* @${sender.split("@")[0]}`;
-        recoveredMessage += `\n📌 *Type:* ${messageType}`;
-
-        if (msg.message?.conversation) {
-            recoveredMessage += `\n📝 *Content:* ${msg.message.conversation}`;
-        } else if (msg.message[messageType]?.caption) {
-            recoveredMessage += `\n📝 *Caption:* ${msg.message[messageType].caption}`;
-        }
-
-        recoveredMessage += `\n\n> *Regards, Bruce Bera.*`;
-
-        // Send the recovered message ONLY in the chat where it was deleted
-        await Matrix.sendMessage(chatId, { text: recoveredMessage, mentions: [sender] });
-
-    } catch (error) {
-        console.error("Antidelete Error:", error);
+        const data = await readFile(antiDeleteFile, "utf8");
+        return JSON.parse(data);
+    } catch {
+        return {};
     }
 };
 
-export default {
-    name: "antidelete",
-    execute: antidelete
+// ✅ Write Anti-Delete Status
+const writeAntiDeleteStatus = async (status) => {
+    await writeFile(antiDeleteFile, JSON.stringify(status, null, 2));
 };
+
+const antidelete = async (m, Matrix) => {
+    const chatId = m.from;
+    const isGroup = m.isGroup;
+
+    let antiDeleteStatus = await readAntiDeleteStatus();
+
+    // ✅ Allow Any User to Toggle
+    if (m.body.toLowerCase() === "antidelete on" || m.body.toLowerCase() === "antidelete off") {
+        antiDeleteStatus[chatId] = m.body.toLowerCase() === "antidelete on";
+        await writeAntiDeleteStatus(antiDeleteStatus);
+
+        await Matrix.sendMessage(chatId, { 
+            text: `✅ *Anti-Delete has been ${m.body.toLowerCase() === "antidelete on" ? "enabled" : "disabled"} in this chat.*`
+        }, { quoted: m });
+        return;
+    }
+
+    // ✅ Detect Deleted Messages and Recover
+    if (m.type === "message-revoke") {
+        if (!antiDeleteStatus[chatId]) return; // Ignore if Anti-Delete is off
+
+        const originalMessage = m.message; // The deleted message
+        const userJid = m.participant; // Who deleted the message
+
+        const recoveryMessage = `🚨 *Anti-Delete Active!* 🚨\n\n👤 *User:* @${userJid.split("@")[0]}\n🗑️ *Tried to delete a message!*\n\n📩 *Message Content:*`;
+
+        await Matrix.sendMessage(chatId, { text: recoveryMessage, mentions: [userJid] });
+        await Matrix.sendMessage(chatId, originalMessage, { quoted: m }); // Re-send deleted message
+    }
+};
+
+export default antidelete;
