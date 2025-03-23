@@ -1,6 +1,6 @@
 import { writeFile, readFile } from 'fs/promises';
 
-const welcomeFile = './Bera.json';
+const welcomeFile = './bera.json';
 
 // Function to read welcome status
 const readWelcomeStatus = async () => {
