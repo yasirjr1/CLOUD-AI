@@ -2,7 +2,6 @@ import { writeFile, readFile } from 'fs/promises';
 
 const welcomeFile = './bera.json';
 
-// Function to read welcome status
 const readWelcomeStatus = async () => {
     try {
         const data = await readFile(welcomeFile, 'utf8');
@@ -12,7 +11,6 @@ const readWelcomeStatus = async () => {
     }
 };
 
-// Function to write welcome status
 const writeWelcomeStatus = async (status) => {
     await writeFile(welcomeFile, JSON.stringify(status, null, 2));
 };
@@ -21,13 +19,20 @@ const welcome = async (m, Matrix) => {
     const chatId = m.from;
     const senderId = m.sender;
     const isGroup = m.isGroup;
-    const isAdmin = m.isAdmin;
     const text = m.body.trim().toLowerCase();
+
+    if (!isGroup) return;
+
+    // ✅ Fetch group metadata to check admin status
+    const groupMetadata = await Matrix.groupMetadata(chatId);
+    const admins = groupMetadata.participants.filter(p => p.admin);
+    const isAdmin = admins.some(a => a.id === senderId);
+
     let welcomeStatus = await readWelcomeStatus();
 
-    // Toggle welcome (Admins only)
+    // ✅ Toggle Welcome (Admins Only)
     if (text === "welcome on" || text === "welcome off") {
-        if (!isGroup || !isAdmin) {
+        if (!isAdmin) {
             await Matrix.sendMessage(chatId, { text: "❌ *Permission Denied!* Only *group admins* can toggle the welcome message." }, { quoted: m });
             return;
         }
@@ -39,12 +44,12 @@ const welcome = async (m, Matrix) => {
         return;
     }
 
-    // If a new participant joins & welcome is enabled
+    // ✅ Send Welcome Message
     if (m.type === "group-participants-update" && m.action === "add") {
         if (!welcomeStatus[chatId]) return;
 
         const userJid = m.participants[0];
-        const userProfilePic = await Matrix.profilePictureUrl(userJid, 'image').catch(() => "https://i.imgur.com/6Q0qLAE.jpg"); // Default pic if none exists
+        const userProfilePic = await Matrix.profilePictureUrl(userJid, 'image').catch(() => "https://i.imgur.com/6Q0qLAE.jpg");
 
         const welcomeMessage = `🌟 *Welcome to the group!* 🌟\n\n👤 *User:* @${userJid.split('@')[0]}\n📌 *Enjoy your stay and follow the rules!*\n\n*Regards, Bera Tech*`;
 
