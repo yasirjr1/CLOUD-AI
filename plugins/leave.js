@@ -1,20 +1,23 @@
-const leaveGroup = async (m, Matrix) => {
-    const chatId = m.from;
-    const isGroup = m.isGroup;
-    const botJid = Matrix.user.id; // ✅ Bot's own WhatsApp ID
+import config from '../config.cjs';
 
-    const text = m.body?.trim()?.toLowerCase();
-    const validTriggers = ["left", "leave"];
+const leaveGroup = async (m, gss) => {
+  try {
+    const botNumber = await gss.decodeJid(gss.user.id);
+    const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net'].includes(m.sender);
 
-    if (!isGroup) return; // ✅ Works only in groups
-    if (!validTriggers.includes(text)) return; // ✅ Only triggers on "left" or "leave"
-    if (m.sender !== botJid) {
-        await Matrix.sendMessage(chatId, { text: "❌ *Permission Denied!* Only the bot itself can leave the group." }, { quoted: m });
-        return;
-    }
+    const text = m.body.trim().toLowerCase();
+    const validCommands = ['leave', 'left'];
 
-    await Matrix.sendMessage(chatId, { text: "👋 *Goodbye everyone!* I'm leaving the group now." }, { quoted: m });
-    await Matrix.groupLeave(chatId);
+    if (!validCommands.includes(text)) return; // ✅ Only respond if the exact trigger word is used
+
+    if (!m.isGroup) return m.reply("*❌ This command can only be used in groups!*");
+
+    if (!isCreator) return m.reply("*❌ This is an owner-only command!*");
+
+    await gss.groupLeave(m.from);
+  } catch (error) {
+    console.error('Error:', error);
+  }
 };
 
 export default leaveGroup;
