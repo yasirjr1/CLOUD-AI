@@ -2,7 +2,7 @@ import { writeFile, readFile } from "fs/promises";
 
 const antileftFile = "./antileft.json";
 
-// Read status
+// Read Anti-Left status
 const readAntiLeftStatus = async () => {
     try {
         const data = await readFile(antileftFile, "utf8");
@@ -12,18 +12,18 @@ const readAntiLeftStatus = async () => {
     }
 };
 
-// Write status
+// Write Anti-Left status
 const writeAntiLeftStatus = async (status) => {
     await writeFile(antileftFile, JSON.stringify(status, null, 2));
 };
 
+// Anti-Left Function
 const antileft = async (m, Matrix) => {
     const chatId = m.from;
     const text = m.body?.trim().toLowerCase();
-
     let antileftStatus = await readAntiLeftStatus();
 
-    // ✅ Trigger words
+    // ✅ Toggle Anti-Left
     if (text === "antileft on" || text === "antileft off") {
         antileftStatus[chatId] = text === "antileft on";
         await writeAntiLeftStatus(antileftStatus);
@@ -34,8 +34,8 @@ const antileft = async (m, Matrix) => {
         return;
     }
 
-    // ✅ Detect participant leaving
-    if (m.update?.participants && m.update.action === "leave") {
+    // ✅ Detect participant leaving or being removed
+    if (m.update?.participants && ["leave", "remove"].includes(m.update.action)) {
         const userJid = m.update.participants[0];
         if (!antileftStatus[chatId]) return;
 
