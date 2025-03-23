@@ -1,64 +1,56 @@
-import { writeFile, readFile } from 'fs/promises';
+import { writeFile, readFile } from "fs/promises";
 
-const antileftFile = './antileft.json';
+const antileftFile = "./antileft.json";
 
-// Read anti-left status
+// Read status
 const readAntiLeftStatus = async () => {
     try {
-        const data = await readFile(antileftFile, 'utf8');
+        const data = await readFile(antileftFile, "utf8");
         return JSON.parse(data);
     } catch {
         return {};
     }
 };
 
-// Write anti-left status
+// Write status
 const writeAntiLeftStatus = async (status) => {
     await writeFile(antileftFile, JSON.stringify(status, null, 2));
 };
 
 const antileft = async (m, Matrix) => {
     const chatId = m.from;
-    const senderId = m.sender;
-    const isGroup = m.isGroup;
     const text = m.body?.trim().toLowerCase();
-
-    if (!isGroup) return;
-
-    // ✅ Fetch group metadata to check admin status
-    const groupMetadata = await Matrix.groupMetadata(chatId);
-    const admins = groupMetadata.participants.filter(p => p.admin);
-    const isAdmin = admins.some(a => a.id === senderId);
 
     let antileftStatus = await readAntiLeftStatus();
 
-    // ✅ Toggle Anti-Left (Admins Only)
+    // ✅ Trigger words
     if (text === "antileft on" || text === "antileft off") {
-        if (!isAdmin) {
-            await Matrix.sendMessage(chatId, { text: "❌ *Permission Denied!* Only *group admins* can toggle the anti-left feature." }, { quoted: m });
-            return;
-        }
-
         antileftStatus[chatId] = text === "antileft on";
         await writeAntiLeftStatus(antileftStatus);
 
-        await Matrix.sendMessage(chatId, { text: `✅ *Anti-Left has been ${text === "antileft on" ? "enabled" : "disabled"} for this group.*` }, { quoted: m });
+        await Matrix.sendMessage(chatId, {
+            text: `✅ *Anti-Left has been ${text === "antileft on" ? "enabled" : "disabled"} for this group.*`,
+        }, { quoted: m });
         return;
     }
 
-    // ✅ Monitor for members leaving
-    if (m.update?.participants && m.update.action === "remove") {
+    // ✅ Detect participant leaving
+    if (m.update?.participants && m.update.action === "leave") {
+        const userJid = m.update.participants[0];
         if (!antileftStatus[chatId]) return;
 
-        const userJid = m.update.participants[0];
+        // Try to re-add the user
+        try {
+            await Matrix.sendMessage(chatId, {
+                text: `⚠️ *Anti-Left Active!* @${userJid.split('@')[0]} tried to leave and has been re-added.`,
+                mentions: [userJid]
+            });
 
-        await Matrix.sendMessage(chatId, { 
-            text: `⚠️ *Anti-Left is enabled!* @${userJid.split('@')[0]} has left.\n\n🚫 Re-adding user...`, 
-            mentions: [userJid] 
-        });
-
-        // Re-add the user
-        await Matrix.groupParticipantsUpdate(chatId, [userJid], "add");
+            await Matrix.groupParticipantsUpdate(chatId, [userJid], "add");
+        } catch (error) {
+            console.error("❌ Failed to re-add user:", error);
+            await Matrix.sendMessage(chatId, { text: "⚠️ Unable to re-add user. They might have privacy settings blocking it." });
+        }
     }
 };
 
