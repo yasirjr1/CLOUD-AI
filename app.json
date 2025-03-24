@@ -1,11 +1,21 @@
 {
-  "name": "BERA TECH",
-  "description": "I am BERA TECH WhatsApp MultiDevice Bot built in NodeJs to enhance the experience.",
-  "logo": "https://files.catbox.moe/6c2p2w.jpg",
+  "name": "CLOUD Ai",
+  "description": "🚀 CLOUD AI WhatsApp MultiDevice Bot – Your ultimate AI-powered assistant, built in Node.js to revolutionize WhatsApp automation! From smart replies to advanced moderation, experience seamless interaction like never before. 💡✨",
+  "logo": "https://files.catbox.moe/7jt69h.jpg",
   "keywords": ["BERA-TECH", "whatsapp-bot", "whatsapp-md-bot"],
   "repository": "https://github.com/DEVELOPER-BERA/CLOUD-AI",
   "stack": "container",
   "env": { 
+    "HEROKU_API_KEY": {
+      "description": "Place your Heroku API Key here",
+      "required": true,
+      "value": ""
+    },
+    "HEROKU_APP_NAME": {
+      "description": "Place your Heroku App Name here",
+      "required": true,
+      "value": ""
+    },
     "SESSION_ID": {
       "description": "Ensure your session Id starts with the word BERA-TECH$",
       "required": true,
@@ -16,19 +26,14 @@
       "required": true,
       "value": "public"
     },
-    "PREFIX": {
-      "description": "Your Bot Prefix (default: .)",
-      "required": false,
-      "value": "."
-    },
     "OWNER_NAME": {
       "description": "Your name as the bot owner",
-      "required": false,
+      "required": true,
       "value": "BRUCE BERA"
     },
     "OWNER_NUMBER": {
       "description": "Your WhatsApp number",
-      "required": false,
+      "required": true,
       "value": "254743982206"
     },
     "AUTO_READ": {
