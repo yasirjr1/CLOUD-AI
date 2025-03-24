@@ -12,25 +12,23 @@ const config = {
   HEROKU_APP_NAME: process.env.HEROKU_APP_NAME || "",
 
   // 🚀 Bot Auto Features
-  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== undefined ? process.env.AUTO_STATUS_SEEN === 'true' : true, 
-  AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY !== undefined ? process.env.AUTO_STATUS_REPLY === 'true' : true,
+  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN === 'true',
+  AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY === 'true',
   STATUS_READ_MSG: process.env.STATUS_READ_MSG || '',
-  AUTO_DL: process.env.AUTO_DL !== undefined ? process.env.AUTO_DL === 'true' : false,
-  AUTO_READ: process.env.AUTO_READ !== undefined ? process.env.AUTO_READ === 'true' : false,
-  AUTO_TYPING: process.env.AUTO_TYPING !== undefined ? process.env.AUTO_TYPING === 'true' : false,
-  AUTO_RECORDING: process.env.AUTO_RECORDING !== undefined ? process.env.AUTO_RECORDING === 'true' : false,
-  ALWAYS_ONLINE: process.env.ALWAYS_ONLINE !== undefined ? process.env.ALWAYS_ONLINE === 'true' : false,
-  AUTO_REACT: process.env.AUTO_REACT !== undefined ? process.env.AUTO_REACT === 'true' : false,
-  AUTO_BLOCK: process.env.AUTO_BLOCK !== undefined ? process.env.AUTO_BLOCK === 'true' : false,
-  REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
-  NOT_ALLOW: process.env.NOT_ALLOW !== undefined ? process.env.NOT_ALLOW === 'true' : true,
+  AUTO_DL: process.env.AUTO_DL === 'true',
+  AUTO_READ: process.env.AUTO_READ === 'true',
+  AUTO_TYPING: process.env.AUTO_TYPING === 'true',
+  AUTO_RECORDING: process.env.AUTO_RECORDING === 'true',
+  ALWAYS_ONLINE: process.env.ALWAYS_ONLINE === 'true',
+  AUTO_REACT: process.env.AUTO_REACT === 'true',
+  AUTO_BLOCK: process.env.AUTO_BLOCK === 'true',
+  REJECT_CALL: process.env.REJECT_CALL === 'true',
+  NOT_ALLOW: process.env.NOT_ALLOW === 'true',
 
   // 🛡 Security Settings
-  ANTI_LEFT: process.env.ANTI_LEFT !== undefined ? process.env.ANTI_LEFT === 'true' : true, 
-  ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
-
+  
   // 🔥 Auto Bio with Juice WRLD Quotes
-  AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
+  AUTO_BIO: process.env.AUTO_BIO === 'true',
   BIO_QUOTES: [
     "I still see your shadows in my room...",
     "You left me falling and landing inside my grave...",
@@ -47,4 +45,5 @@ const config = {
   defaultProfilePicture: "https://files.catbox.moe/6c2p2w.jpg"
 };
 
+// Export Config
 module.exports = config;
