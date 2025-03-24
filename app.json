@@ -8,7 +8,7 @@
   "env": { 
     "HEROKU_API_KEY": {
       "description": "Place your Heroku API Key here",
-      "required": true,
+      "required": false,
       "value": ""
     },
     "HEROKU_APP_NAME": {
