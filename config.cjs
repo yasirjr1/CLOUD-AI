@@ -3,7 +3,15 @@ require("dotenv").config();
 
 const config = {
   SESSION_ID: process.env.SESSION_ID || "Your Session Id",
-  PREFIX: process.env.PREFIX || '.',
+  MODE: process.env.MODE || "public",
+  OWNER_NAME: process.env.OWNER_NAME || "BRUCE BERA",
+  OWNER_NUMBER: process.env.OWNER_NUMBER || "254743982206",
+
+  // 🌐 Heroku Deployment Keys
+  HEROKU_API_KEY: process.env.HEROKU_API_KEY || "",
+  HEROKU_APP_NAME: process.env.HEROKU_APP_NAME || "",
+
+  // 🚀 Bot Auto Features
   AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== undefined ? process.env.AUTO_STATUS_SEEN === 'true' : true, 
   AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY !== undefined ? process.env.AUTO_STATUS_REPLY === 'true' : true,
   STATUS_READ_MSG: process.env.STATUS_READ_MSG || '',
@@ -16,17 +24,12 @@ const config = {
   AUTO_BLOCK: process.env.AUTO_BLOCK !== undefined ? process.env.AUTO_BLOCK === 'true' : false,
   REJECT_CALL: process.env.REJECT_CALL !== undefined ? process.env.REJECT_CALL === 'true' : false, 
   NOT_ALLOW: process.env.NOT_ALLOW !== undefined ? process.env.NOT_ALLOW === 'true' : true,
-  MODE: process.env.MODE || "public",
-  OWNER_NAME: process.env.OWNER_NAME || "BRUCE BERA",
-  OWNER_NUMBER: process.env.OWNER_NUMBER || "254743982206",
-  GEMINI_KEY: process.env.GEMINI_KEY || "",
-  WELCOME: process.env.WELCOME !== undefined ? process.env.WELCOME === 'true' : false, 
 
-  // 🛡 Antileft & Antidelete Settings
+  // 🛡 Security Settings
   ANTI_LEFT: process.env.ANTI_LEFT !== undefined ? process.env.ANTI_LEFT === 'true' : true, 
   ANTI_DELETE: process.env.ANTI_DELETE !== undefined ? process.env.ANTI_DELETE === 'true' : true,
 
-  // Auto Bio with Juice WRLD Quotes
+  // 🔥 Auto Bio with Juice WRLD Quotes
   AUTO_BIO: process.env.AUTO_BIO !== undefined ? process.env.AUTO_BIO === 'true' : false,
   BIO_QUOTES: [
     "I still see your shadows in my room...",
@@ -37,8 +40,11 @@ const config = {
     "Took a pill in Ibiza to show Avicii I was cool..."
   ],
 
-  // Default Profile Picture (used when a profile pic is unavailable)
-  defaultProfilePicture: "https://files.catbox.moe/6c2p2w.jpg" // Replace with a real default image URL
+  // 🤖 AI Integration
+  GEMINI_KEY: process.env.GEMINI_KEY || "",
+
+  // 🎨 Default Profile Picture
+  defaultProfilePicture: "https://files.catbox.moe/6c2p2w.jpg"
 };
 
 module.exports = config;
