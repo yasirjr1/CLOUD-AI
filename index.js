@@ -117,10 +117,10 @@ Matrix.ev.on('connection.update', (update) => {
         if (initialConnection) {
             console.log(chalk.green("Connected Successfully cloud ai "));
             Matrix.sendMessage(Matrix.user.id, { 
-                image: { url: "https://files.catbox.moe/pf270b.jpg" }, 
+                image: { url: "https://storage.giftedtech.web.id/file/sbqQW.jpg" }, 
                 caption: `*Hello there  User! 👋🏻* 
 
-> Simple, Straightforward, But Loaded With Features 🎊. Meet JAWAD-MD WhatsApp Bot.
+
 
 *Thanks for using cloud Ai* 
 
