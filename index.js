@@ -279,7 +279,7 @@ async function downloadSessionData() {
         return false;
     }
 
-    const sessdata = config.SESSION_ID.split("JOEL-XMD~")[1];
+    const sessdata = config.SESSION_ID.split("CLOUD-AI~")[1];
 
     if (!sessdata || !sessdata.includes("#")) {
         console.error('Invalid SESSION_ID format! It must contain both file ID and decryption key.');
@@ -341,12 +341,12 @@ Matrix.ev.on('connection.update', (update) => {
             Matrix.sendMessage(Matrix.user.id, { 
                 image: { url: "https://files.catbox.moe/ytb8lg.jpg" }, 
                 caption: `╭─────────────━┈⊷
-│ *ᴊᴏᴇʟ-xᴍᴅ-ᴠ¹⁰ ɴᴏᴛɪғɪᴄᴀᴛɪᴏɴs*
+│ *CLoud Ai notifications *
 ╰─────────────━┈⊷
 
 ╭─────────────━┈⊷
-│ᴊᴏᴇʟ xᴍᴅ ɪs ᴏɴʟɪɴᴇ
-│ᴏᴡɴᴇʀ: ʟᴏʀᴅ ᴊᴏᴇʟ
+│cloud ai connected 
+│Dev: Bera
 ╰─────────────━┈⊷
 
 *ʀᴇᴘᴏʀᴛ ᴀɴʏ ᴇʀʀᴏʀ ᴛᴏ ᴍʏ ᴏᴡɴᴇʀ*`
