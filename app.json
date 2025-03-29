@@ -6,18 +6,9 @@
   "repository": "https://github.com/DEVELOPER-BERA/CLOUD-AI",
   "stack": "container",
   "env": { 
-    "HEROKU_API_KEY": {
-      "description": "Place your Heroku API Key here",
-      "required": false,
-      "value": ""
-    },
-    "HEROKU_APP_NAME": {
-      "description": "Place your Heroku App Name here",
-      "required": true,
-      "value": ""
-    },
+  
     "SESSION_ID": {
-      "description": "Ensure your session Id starts with the word BERA-TECH$",
+      "description": "Ensure your session Id starts with the word CLOUD-AI~$",
       "required": true,
       "value": ""
     },
