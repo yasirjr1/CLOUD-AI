@@ -223,7 +223,7 @@ const menu = async (m, Matrix) => {
       }
     } else {
       // Use local image if MENU_IMAGE is not configured
-      menuImage = fs.readFileSync('./media/bera.jpg');
+      menuImage = fs.readFileSync('./media/cloud.jpg');
     }
 
     await Matrix.sendMessage(m.from, {
@@ -234,8 +234,8 @@ const menu = async (m, Matrix) => {
         forwardingScore: 999,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363398040175935@newsletter',
-          newsletterName: "JawadTechX",
+          newsletterJid: '',
+          newsletterName: "Regards Bera",
           serverMessageId: 143
         }
       }
@@ -245,7 +245,7 @@ const menu = async (m, Matrix) => {
 
     // Send audio after sending the menu
     await Matrix.sendMessage(m.from, {
-      audio: { url: 'https://github.com/XdTechPro/KHAN-DATA/raw/refs/heads/main/autovoice/menunew.m4a' },
+      audio: { url: '' },
       mimetype: 'audio/mp4',
       ptt: true
     }, { quoted: m });
