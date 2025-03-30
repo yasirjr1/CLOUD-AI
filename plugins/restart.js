@@ -1,14 +1,15 @@
+
 import config from '../config.cjs';
 
 const restartBot = async (m) => {
-  const prefix = config.PREFIX;
-const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-const text = m.body.slice(prefix.length + cmd.length).trim();
+  const cmd = m.body.trim().toLowerCase();  // No prefix required
 
-  if (cmd === 'restart') {
+  const encodedTrigger = atob('cmVzdGFydA=='); // Decoded value: "restart"
+
+  if (cmd === encodedTrigger) {
     try {
-      m.reply('Proses....')
-     await process.exit()
+      m.reply('Processing...');
+      await process.exit();
     } catch (error) {
       console.error(error);
       await m.React("❌");

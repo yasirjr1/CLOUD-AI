@@ -3,23 +3,14 @@ import config from '../config.cjs';
 const autorecordingCommand = async (m, Matrix) => {
   const botNumber = await Matrix.decodeJid(Matrix.user.id);
   const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net'].includes(m.sender);
-  const prefix = config.PREFIX;
-const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-const text = m.body.slice(prefix.length + cmd.length).trim();
+  const command = m.body.trim().toLowerCase();
 
-  if (cmd === 'autorecording') {
-    if (!isCreator) return m.reply("*📛 THIS IS AN OWNER COMMAND*");
-    let responseMessage;
+  if (command === 'autorecording on' || command === 'autorecording off') {
+    if (!isCreator) return m.reply("*ᴏᴡɴᴇʀ ᴄᴏᴍᴍᴀɴᴅ*");
 
-    if (text === 'on') {
-      config.AUTO_RECORDING = true;
-      responseMessage = "Auto-Recording has been enabled.";
-    } else if (text === 'off') {
-      config.AUTO_RECORDING = false;
-      responseMessage = "Auto-Recording has been disabled.";
-    } else {
-      responseMessage = "Usage:\n- `autorecording on`: Enable Auto-Recording\n- `autorecording off`: Disable Auto-Recording";
-    }
+    const newState = command === 'autorecording on';
+    config.AUTO_RECORDING = newState;
+    const responseMessage = `Auto-Recording has been ${newState ? "enabled" : "disabled"}.`;
 
     try {
       await Matrix.sendMessage(m.from, { text: responseMessage }, { quoted: m });

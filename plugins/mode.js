@@ -1,33 +1,26 @@
+
 import config from '../config.cjs';
 
 const modeCommand = async (m, Matrix) => {
     const botNumber = await Matrix.decodeJid(Matrix.user.id);
     const isCreator = [botNumber, config.OWNER_NUMBER + '@s.whatsapp.net'].includes(m.sender);
-    const prefix = config.PREFIX;
-const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-const text = m.body.slice(prefix.length + cmd.length).trim();
 
+    const text = m.body.trim().toLowerCase();
 
-    if (cmd === 'mode') {
+    if (text === 'mode public' || text === 'mode private') {
         if (!isCreator) {
-            await Matrix.sendMessage(m.from, { text: "*📛 THIS IS AN OWNER COMMAND*" }, { quoted: m });
+            await Matrix.sendMessage(m.from, { text: "*OWNER COMMAND*" }, { quoted: m });
             return;
         }
 
-        if (['public', 'private'].includes(text)) {
-            if (text === 'public') {
-                Matrix.public = true;
-               config.MODE = "public";
-                m.reply('Mode has been changed to public.');
-            } else if (text === 'private') {
-                Matrix.public = false;
-                config.MODE = "private";
-                m.reply('Mode has been changed to private.');
-            } else {
-                m.reply("Usage:\n.Mode public/private");
-            }
-        } else {
-            m.reply("Invalid mode. Please use 'public' or 'private'.");
+        if (text === 'mode public') {
+            Matrix.public = true;
+            config.MODE = "public";
+            await Matrix.sendMessage(m.from, { text: "Mode has been changed to *public*." }, { quoted: m });
+        } else if (text === 'mode private') {
+            Matrix.public = false;
+            config.MODE = "private";
+            await Matrix.sendMessage(m.from, { text: "Mode has been changed to *private*." }, { quoted: m });
         }
     }
 };

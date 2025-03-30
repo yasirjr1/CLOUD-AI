@@ -1,78 +1,64 @@
-import { downloadMediaMessage } from '@whiskeysockets/baileys';
-import Jimp from 'jimp';
+import generateProfilePicture from '../media/generateProfilePicture.js'; 
+import { writeFile, unlink } from 'fs/promises';
 import config from '../config.cjs';
 
-const updateGroupPicture = async (m, sock) => {
+const setProfilePictureGroup = async (m, gss) => {
   const prefix = config.PREFIX;
-  const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
-  
-  if (cmd !== "gcpp") return;
+const cmd = m.body.startsWith(prefix) ? m.body.slice(prefix.length).split(' ')[0].toLowerCase() : '';
+const text = m.body.slice(prefix.length + cmd.length).trim();
 
-  // Check if the message is from a group
-  if (!m.isGroup) {
-    return m.reply("❌ This command can only be used in groups.");
-  }
+  const validCommands = ['setppfullgroup', 'setfullprofilepicgc', 'fullppgc'];
 
-  // Check if user is a group admin
-  const groupMetadata = await sock.groupMetadata(m.from);
-  const participant = groupMetadata.participants.find(p => p.id === m.sender);
-  if (!participant?.admin) {
-    return m.reply("❌ You must be a group admin to use this command.");
-  }
+  if (validCommands.includes(cmd)) {
+    
+    if (!m.isGroup) return m.reply("*THIS COMMAND CAN ONLY BE USED IN GROUPS*");
+    const groupMetadata = await gss.groupMetadata(m.from);
+    const participants = groupMetadata.participants;
+    const botNumber = await gss.decodeJid(gss.user.id);
+    const botAdmin = participants.find(p => p.id === botNumber)?.admin;
+    const senderAdmin = participants.find(p => p.id === m.sender)?.admin;
 
-  // Check if the replied message is an image
-  if (!m.quoted?.message?.imageMessage) {
-    return m.reply("⚠️ Please *reply to an image* to set as group profile picture.");
-  }
-
-  await m.React('⏳'); // Loading reaction
-
-  try {
-    // Download the image
-    const media = await downloadMediaMessage(m.quoted, 'buffer', {});
-    if (!media) {
-      await m.React('❌');
-      return m.reply("❌ Failed to download image.");
+    if (!botAdmin) return m.reply("*BOT MUST BE AN ADMIN TO USE THIS COMMAND*");
+    if (!senderAdmin) return m.reply("*YOU MUST BE AN ADMIN TO USE THIS COMMAND*");
+    if (!m.quoted || m.quoted.mtype !== 'imageMessage') {
+      return m.reply(`Send/Reply with an image to set your profile picture ${prefix + cmd}`);
     }
 
-    // Process image
-    const image = await Jimp.read(media);
-    if (!image) throw new Error("Invalid image format");
+    try {
+      const media = await m.quoted.download(); // Download the media from the quoted message
+      if (!media) throw new Error('Failed to download media.');
 
-    // Create square canvas
-    const size = Math.max(image.bitmap.width, image.bitmap.height);
-    const squareImage = new Jimp(size, size, 0x000000FF);
-    
-    // Center the original image on the square canvas
-    const x = (size - image.bitmap.width) / 2;
-    const y = (size - image.bitmap.height) / 2;
-    squareImage.composite(image, x, y);
+      const filePath = `./${Date.now()}.png`;
+      await writeFile(filePath, media);
 
-    // Resize to WhatsApp requirements (512x512 recommended for groups)
-    squareImage.resize(512, 512);
-    
-    // Convert to buffer
-    const buffer = await squareImage.getBufferAsync(Jimp.MIME_JPEG);
-
-    // Update group profile picture
-    await sock.updateProfilePicture(m.from, buffer);
-    await m.React('✅');
-
-    // Success response
-    return sock.sendMessage(
-      m.from,
-      { 
-        text: "✅ *Group profile picture updated successfully!*",
-        mentions: [m.sender]
-      },
-      { quoted: m }
-    );
-    
-  } catch (error) {
-    console.error("Error setting group profile picture:", error);
-    await m.React('❌');
-    return m.reply("❌ Failed to update group picture: " + error.message);
+      try {
+        const { img } = await generateProfilePicture(media); // Generate profile picture
+        await gss.query({
+          tag: 'iq',
+          attrs: {
+            to: m.from,
+            type: 'set',
+            xmlns: 'w:profile:picture'
+          },
+          content: [{
+            tag: 'picture',
+            attrs: {
+              type: 'image'
+            },
+            content: img
+          }]
+        });
+        m.reply('Profile picture updated successfully.');
+      } catch (err) {
+        throw err;
+      } finally {
+        await unlink(filePath); // Clean up the downloaded file
+      }
+    } catch (error) {
+      console.error('Error setting profile picture:', error);
+      m.reply('Error setting profile picture.');
+    }
   }
 };
 
-export default updateGroupPicture;
+export default setProfilePictureGroup;
