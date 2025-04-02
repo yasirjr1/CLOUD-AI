@@ -41,7 +41,7 @@ menu✅
 ✨ Generate your secure session ID by clicking the button below:
 
 <p align="center">
-  <a href="https://cloud-ai-tech-929b3aa5b5ff.herokuapp.com/" target="_blank">
+  <a href="https://cloud-tech-tces.onrender.com" target="_blank">
     <img alt="Pair Code" src="https://img.shields.io/badge/PAIR CODE-⚡ GET CODE NOW ⚡-gold?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=black"/>
   </a>
 </p>
